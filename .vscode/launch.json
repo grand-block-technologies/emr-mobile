@@ -1,0 +1,45 @@
+{
+  // Pick a configuration in Run and Debug (Cmd+Shift+D), then press F5 (fn+F5 on a Mac keyboard).
+  // "tunnel" = current Cloudflare backend (env/tunnel.json); "local" = backend on this Mac at :8080.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Crew app (tunnel)",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "mobile/apps/crew_app",
+      "program": "lib/main.dart",
+      "toolArgs": ["--dart-define-from-file=../../env/tunnel.json"]
+    },
+    {
+      "name": "Citizen app (tunnel)",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "mobile/apps/citizen_app",
+      "program": "lib/main.dart",
+      "toolArgs": ["--dart-define-from-file=../../env/tunnel.json"]
+    },
+    {
+      "name": "Crew app (local backend)",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "mobile/apps/crew_app",
+      "program": "lib/main.dart",
+      "toolArgs": ["--dart-define-from-file=../../env/dev.json"]
+    },
+    {
+      "name": "Citizen app (local backend)",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "mobile/apps/citizen_app",
+      "program": "lib/main.dart",
+      "toolArgs": ["--dart-define-from-file=../../env/dev.json"]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Both apps (tunnel)",
+      "configurations": ["Crew app (tunnel)", "Citizen app (tunnel)"]
+    }
+  ]
+}

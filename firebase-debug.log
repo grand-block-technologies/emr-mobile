@@ -1,0 +1,170 @@
+[debug] [2026-10-18T09:50:28.177Z] ----------------------------------------------------------------------
+[debug] [2026-10-18T09:50:28.181Z] Command:       /opt/homebrew/Cellar/node/26.7.0/bin/node /opt/homebrew/bin/firebase projects:list
+[debug] [2026-10-18T09:50:28.181Z] CLI Version:   15.34.0
+[debug] [2026-10-18T09:50:28.181Z] Platform:      darwin
+[debug] [2026-10-18T09:50:28.181Z] Node Version:  v26.7.0
+[debug] [2026-10-18T09:50:28.182Z] Detected Agent: codex_cli
+[debug] [2026-10-18T09:50:28.182Z] Time:          Sun Oct 18 2026 17:50:28 GMT+0800 (Malaysia Time)
+[debug] [2026-10-18T09:50:28.182Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-10-18T09:50:28.185Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-10-18T09:50:28.186Z] > authorizing via signed-in user (a.abdalla@gbt.ae)
+[debug] [2026-10-18T09:50:28.196Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:50:28.196Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:50:28.197Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2026-10-18T09:50:28.857Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2026-10-18T09:50:34.931Z] ----------------------------------------------------------------------
+[debug] [2026-10-18T09:50:34.933Z] Command:       /opt/homebrew/Cellar/node/26.7.0/bin/node /opt/homebrew/bin/firebase apps:list --project emr-mr-sudan-dev-8f311
+[debug] [2026-10-18T09:50:34.933Z] CLI Version:   15.34.0
+[debug] [2026-10-18T09:50:34.934Z] Platform:      darwin
+[debug] [2026-10-18T09:50:34.934Z] Node Version:  v26.7.0
+[debug] [2026-10-18T09:50:34.934Z] Detected Agent: codex_cli
+[debug] [2026-10-18T09:50:34.934Z] Time:          Sun Oct 18 2026 17:50:34 GMT+0800 (Malaysia Time)
+[debug] [2026-10-18T09:50:34.934Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-10-18T09:50:34.939Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-10-18T09:50:34.940Z] > authorizing via signed-in user (a.abdalla@gbt.ae)
+[debug] [2026-10-18T09:50:34.948Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:50:34.948Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:50:34.949Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/emr-mr-sudan-dev-8f311:searchApps pageSize=100
+[debug] [2026-10-18T09:50:35.555Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/emr-mr-sudan-dev-8f311:searchApps 200
+[debug] [2026-10-18T09:51:48.495Z] ----------------------------------------------------------------------
+[debug] [2026-10-18T09:51:48.502Z] Command:       /opt/homebrew/Cellar/node/26.7.0/bin/node /opt/homebrew/bin/firebase apps:create IOS EMR-MR Crew dev --bundle-id sd.gov.emr.crew --project emr-mr-sudan-dev-8f311
+[debug] [2026-10-18T09:51:48.502Z] CLI Version:   15.34.0
+[debug] [2026-10-18T09:51:48.502Z] Platform:      darwin
+[debug] [2026-10-18T09:51:48.503Z] Node Version:  v26.7.0
+[debug] [2026-10-18T09:51:48.503Z] Detected Agent: codex_cli
+[debug] [2026-10-18T09:51:48.503Z] Time:          Sun Oct 18 2026 17:51:48 GMT+0800 (Malaysia Time)
+[debug] [2026-10-18T09:51:48.503Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-10-18T09:51:48.509Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-10-18T09:51:48.510Z] > authorizing via signed-in user (a.abdalla@gbt.ae)
+[info] Create your IOS app in project emr-mr-sudan-dev-8f311:
+[debug] [2026-10-18T09:51:48.523Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:51:48.523Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:51:48.524Z] >>> [apiv2][query] POST https://firebase.googleapis.com/v1beta1/projects/emr-mr-sudan-dev-8f311/iosApps [none]
+[debug] [2026-10-18T09:51:48.524Z] >>> [apiv2][body] POST https://firebase.googleapis.com/v1beta1/projects/emr-mr-sudan-dev-8f311/iosApps {"displayName":"EMR-MR Crew dev","bundleId":"sd.gov.emr.crew"}
+[debug] [2026-10-18T09:51:50.624Z] <<< [apiv2][status] POST https://firebase.googleapis.com/v1beta1/projects/emr-mr-sudan-dev-8f311/iosApps 200
+[debug] [2026-10-18T09:51:50.624Z] <<< [apiv2][body] POST https://firebase.googleapis.com/v1beta1/projects/emr-mr-sudan-dev-8f311/iosApps {"name":"operations/workflows/Y2Q3ODI4MGEtNDE2OC00ODEyLTg2OWYtNmZmMjUzYTIxNTI2"}
+[debug] [2026-10-18T09:51:50.625Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:51:50.625Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:51:50.625Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/operations/workflows/Y2Q3ODI4MGEtNDE2OC00ODEyLTg2OWYtNmZmMjUzYTIxNTI2 [none]
+[debug] [2026-10-18T09:51:51.541Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/operations/workflows/Y2Q3ODI4MGEtNDE2OC00ODEyLTg2OWYtNmZmMjUzYTIxNTI2 200
+[debug] [2026-10-18T09:51:51.541Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/operations/workflows/Y2Q3ODI4MGEtNDE2OC00ODEyLTg2OWYtNmZmMjUzYTIxNTI2 {"name":"operations/workflows/Y2Q3ODI4MGEtNDE2OC00ODEyLTg2OWYtNmZmMjUzYTIxNTI2"}
+[debug] [2026-10-18T09:51:52.048Z] [Create iOS app Poller] Retrying task index 0
+[debug] [2026-10-18T09:51:52.049Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:51:52.050Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:51:52.050Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/operations/workflows/Y2Q3ODI4MGEtNDE2OC00ODEyLTg2OWYtNmZmMjUzYTIxNTI2 [none]
+[debug] [2026-10-18T09:51:52.439Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/operations/workflows/Y2Q3ODI4MGEtNDE2OC00ODEyLTg2OWYtNmZmMjUzYTIxNTI2 200
+[debug] [2026-10-18T09:51:52.439Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/operations/workflows/Y2Q3ODI4MGEtNDE2OC00ODEyLTg2OWYtNmZmMjUzYTIxNTI2 {"name":"operations/workflows/Y2Q3ODI4MGEtNDE2OC00ODEyLTg2OWYtNmZmMjUzYTIxNTI2"}
+[debug] [2026-10-18T09:51:53.441Z] [Create iOS app Poller] Retrying task index 0
+[debug] [2026-10-18T09:51:53.441Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:51:53.441Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:51:53.441Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/operations/workflows/Y2Q3ODI4MGEtNDE2OC00ODEyLTg2OWYtNmZmMjUzYTIxNTI2 [none]
+[debug] [2026-10-18T09:51:53.995Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/operations/workflows/Y2Q3ODI4MGEtNDE2OC00ODEyLTg2OWYtNmZmMjUzYTIxNTI2 200
+[debug] [2026-10-18T09:51:53.995Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/operations/workflows/Y2Q3ODI4MGEtNDE2OC00ODEyLTg2OWYtNmZmMjUzYTIxNTI2 {"name":"operations/workflows/Y2Q3ODI4MGEtNDE2OC00ODEyLTg2OWYtNmZmMjUzYTIxNTI2"}
+[debug] [2026-10-18T09:51:55.997Z] [Create iOS app Poller] Retrying task index 0
+[debug] [2026-10-18T09:51:55.997Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:51:55.997Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:51:55.997Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/operations/workflows/Y2Q3ODI4MGEtNDE2OC00ODEyLTg2OWYtNmZmMjUzYTIxNTI2 [none]
+[debug] [2026-10-18T09:51:56.762Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/operations/workflows/Y2Q3ODI4MGEtNDE2OC00ODEyLTg2OWYtNmZmMjUzYTIxNTI2 200
+[debug] [2026-10-18T09:51:57.233Z] ----------------------------------------------------------------------
+[debug] [2026-10-18T09:51:57.235Z] Command:       /opt/homebrew/Cellar/node/26.7.0/bin/node /opt/homebrew/bin/firebase apps:create IOS EMR-MR Citizen dev --bundle-id sd.gov.emr.citizen --project emr-mr-sudan-dev-8f311
+[debug] [2026-10-18T09:51:57.236Z] CLI Version:   15.34.0
+[debug] [2026-10-18T09:51:57.236Z] Platform:      darwin
+[debug] [2026-10-18T09:51:57.236Z] Node Version:  v26.7.0
+[debug] [2026-10-18T09:51:57.236Z] Detected Agent: codex_cli
+[debug] [2026-10-18T09:51:57.236Z] Time:          Sun Oct 18 2026 17:51:57 GMT+0800 (Malaysia Time)
+[debug] [2026-10-18T09:51:57.236Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-10-18T09:51:57.243Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-10-18T09:51:57.243Z] > authorizing via signed-in user (a.abdalla@gbt.ae)
+[info] Create your IOS app in project emr-mr-sudan-dev-8f311:
+[debug] [2026-10-18T09:51:57.251Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:51:57.252Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:51:57.252Z] >>> [apiv2][query] POST https://firebase.googleapis.com/v1beta1/projects/emr-mr-sudan-dev-8f311/iosApps [none]
+[debug] [2026-10-18T09:51:57.252Z] >>> [apiv2][body] POST https://firebase.googleapis.com/v1beta1/projects/emr-mr-sudan-dev-8f311/iosApps {"displayName":"EMR-MR Citizen dev","bundleId":"sd.gov.emr.citizen"}
+[debug] [2026-10-18T09:51:59.383Z] <<< [apiv2][status] POST https://firebase.googleapis.com/v1beta1/projects/emr-mr-sudan-dev-8f311/iosApps 200
+[debug] [2026-10-18T09:51:59.383Z] <<< [apiv2][body] POST https://firebase.googleapis.com/v1beta1/projects/emr-mr-sudan-dev-8f311/iosApps {"name":"operations/workflows/Y2QyNzE0OGYtZDlkNS00OTA0LWJiMmMtZjQ2NmQwY2YyMjUy"}
+[debug] [2026-10-18T09:51:59.384Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:51:59.385Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:51:59.385Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/operations/workflows/Y2QyNzE0OGYtZDlkNS00OTA0LWJiMmMtZjQ2NmQwY2YyMjUy [none]
+[debug] [2026-10-18T09:51:59.990Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/operations/workflows/Y2QyNzE0OGYtZDlkNS00OTA0LWJiMmMtZjQ2NmQwY2YyMjUy 200
+[debug] [2026-10-18T09:51:59.990Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/operations/workflows/Y2QyNzE0OGYtZDlkNS00OTA0LWJiMmMtZjQ2NmQwY2YyMjUy {"name":"operations/workflows/Y2QyNzE0OGYtZDlkNS00OTA0LWJiMmMtZjQ2NmQwY2YyMjUy"}
+[debug] [2026-10-18T09:52:00.492Z] [Create iOS app Poller] Retrying task index 0
+[debug] [2026-10-18T09:52:00.493Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:52:00.493Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:52:00.493Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/operations/workflows/Y2QyNzE0OGYtZDlkNS00OTA0LWJiMmMtZjQ2NmQwY2YyMjUy [none]
+[debug] [2026-10-18T09:52:00.987Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/operations/workflows/Y2QyNzE0OGYtZDlkNS00OTA0LWJiMmMtZjQ2NmQwY2YyMjUy 200
+[debug] [2026-10-18T09:52:00.988Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/operations/workflows/Y2QyNzE0OGYtZDlkNS00OTA0LWJiMmMtZjQ2NmQwY2YyMjUy {"name":"operations/workflows/Y2QyNzE0OGYtZDlkNS00OTA0LWJiMmMtZjQ2NmQwY2YyMjUy"}
+[debug] [2026-10-18T09:52:01.989Z] [Create iOS app Poller] Retrying task index 0
+[debug] [2026-10-18T09:52:01.990Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:52:01.990Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:52:01.990Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/operations/workflows/Y2QyNzE0OGYtZDlkNS00OTA0LWJiMmMtZjQ2NmQwY2YyMjUy [none]
+[debug] [2026-10-18T09:52:02.639Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/operations/workflows/Y2QyNzE0OGYtZDlkNS00OTA0LWJiMmMtZjQ2NmQwY2YyMjUy 200
+[debug] [2026-10-18T09:52:02.639Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/operations/workflows/Y2QyNzE0OGYtZDlkNS00OTA0LWJiMmMtZjQ2NmQwY2YyMjUy {"name":"operations/workflows/Y2QyNzE0OGYtZDlkNS00OTA0LWJiMmMtZjQ2NmQwY2YyMjUy"}
+[debug] [2026-10-18T09:52:04.641Z] [Create iOS app Poller] Retrying task index 0
+[debug] [2026-10-18T09:52:04.641Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:52:04.641Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:52:04.641Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/operations/workflows/Y2QyNzE0OGYtZDlkNS00OTA0LWJiMmMtZjQ2NmQwY2YyMjUy [none]
+[debug] [2026-10-18T09:52:05.365Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/operations/workflows/Y2QyNzE0OGYtZDlkNS00OTA0LWJiMmMtZjQ2NmQwY2YyMjUy 200
+[debug] [2026-10-18T09:52:17.520Z] ----------------------------------------------------------------------
+[debug] [2026-10-18T09:52:17.525Z] Command:       /opt/homebrew/Cellar/node/26.7.0/bin/node /opt/homebrew/bin/firebase apps:sdkconfig ANDROID 1:157348855076:android:cc469250f48712f1b887b1 --project emr-mr-sudan-dev-8f311
+[debug] [2026-10-18T09:52:17.525Z] CLI Version:   15.34.0
+[debug] [2026-10-18T09:52:17.525Z] Platform:      darwin
+[debug] [2026-10-18T09:52:17.525Z] Node Version:  v26.7.0
+[debug] [2026-10-18T09:52:17.525Z] Detected Agent: codex_cli
+[debug] [2026-10-18T09:52:17.525Z] Time:          Sun Oct 18 2026 17:52:17 GMT+0800 (Malaysia Time)
+[debug] [2026-10-18T09:52:17.525Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-10-18T09:52:17.530Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-10-18T09:52:17.530Z] > authorizing via signed-in user (a.abdalla@gbt.ae)
+[debug] [2026-10-18T09:52:17.539Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:52:17.539Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:52:17.540Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/-/androidApps/1:157348855076:android:cc469250f48712f1b887b1/config [none]
+[debug] [2026-10-18T09:52:18.823Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/-/androidApps/1:157348855076:android:cc469250f48712f1b887b1/config 200
+[debug] [2026-10-18T09:52:19.136Z] ----------------------------------------------------------------------
+[debug] [2026-10-18T09:52:19.138Z] Command:       /opt/homebrew/Cellar/node/26.7.0/bin/node /opt/homebrew/bin/firebase apps:sdkconfig ANDROID 1:157348855076:android:dfffda131a95db94b887b1 --project emr-mr-sudan-dev-8f311
+[debug] [2026-10-18T09:52:19.138Z] CLI Version:   15.34.0
+[debug] [2026-10-18T09:52:19.138Z] Platform:      darwin
+[debug] [2026-10-18T09:52:19.138Z] Node Version:  v26.7.0
+[debug] [2026-10-18T09:52:19.139Z] Detected Agent: codex_cli
+[debug] [2026-10-18T09:52:19.139Z] Time:          Sun Oct 18 2026 17:52:19 GMT+0800 (Malaysia Time)
+[debug] [2026-10-18T09:52:19.139Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-10-18T09:52:19.143Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-10-18T09:52:19.143Z] > authorizing via signed-in user (a.abdalla@gbt.ae)
+[debug] [2026-10-18T09:52:19.151Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:52:19.151Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:52:19.152Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/-/androidApps/1:157348855076:android:dfffda131a95db94b887b1/config [none]
+[debug] [2026-10-18T09:52:20.730Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/-/androidApps/1:157348855076:android:dfffda131a95db94b887b1/config 200
+[debug] [2026-10-18T09:52:21.043Z] ----------------------------------------------------------------------
+[debug] [2026-10-18T09:52:21.045Z] Command:       /opt/homebrew/Cellar/node/26.7.0/bin/node /opt/homebrew/bin/firebase apps:sdkconfig IOS 1:157348855076:ios:0009ca8be3d05221b887b1 --project emr-mr-sudan-dev-8f311
+[debug] [2026-10-18T09:52:21.045Z] CLI Version:   15.34.0
+[debug] [2026-10-18T09:52:21.045Z] Platform:      darwin
+[debug] [2026-10-18T09:52:21.046Z] Node Version:  v26.7.0
+[debug] [2026-10-18T09:52:21.046Z] Detected Agent: codex_cli
+[debug] [2026-10-18T09:52:21.046Z] Time:          Sun Oct 18 2026 17:52:21 GMT+0800 (Malaysia Time)
+[debug] [2026-10-18T09:52:21.046Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-10-18T09:52:21.050Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-10-18T09:52:21.050Z] > authorizing via signed-in user (a.abdalla@gbt.ae)
+[debug] [2026-10-18T09:52:21.058Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:52:21.058Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:52:21.059Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/-/iosApps/1:157348855076:ios:0009ca8be3d05221b887b1/config [none]
+[debug] [2026-10-18T09:52:22.308Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/-/iosApps/1:157348855076:ios:0009ca8be3d05221b887b1/config 200
+[debug] [2026-10-18T09:52:22.632Z] ----------------------------------------------------------------------
+[debug] [2026-10-18T09:52:22.634Z] Command:       /opt/homebrew/Cellar/node/26.7.0/bin/node /opt/homebrew/bin/firebase apps:sdkconfig IOS 1:157348855076:ios:48f3682a757ba7aab887b1 --project emr-mr-sudan-dev-8f311
+[debug] [2026-10-18T09:52:22.634Z] CLI Version:   15.34.0
+[debug] [2026-10-18T09:52:22.634Z] Platform:      darwin
+[debug] [2026-10-18T09:52:22.634Z] Node Version:  v26.7.0
+[debug] [2026-10-18T09:52:22.635Z] Detected Agent: codex_cli
+[debug] [2026-10-18T09:52:22.635Z] Time:          Sun Oct 18 2026 17:52:22 GMT+0800 (Malaysia Time)
+[debug] [2026-10-18T09:52:22.635Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-10-18T09:52:22.639Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-10-18T09:52:22.639Z] > authorizing via signed-in user (a.abdalla@gbt.ae)
+[debug] [2026-10-18T09:52:22.647Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:52:22.647Z] Checked if tokens are valid: true, expires at: 1792320614742
+[debug] [2026-10-18T09:52:22.648Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/-/iosApps/1:157348855076:ios:48f3682a757ba7aab887b1/config [none]
+[debug] [2026-10-18T09:52:23.873Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/-/iosApps/1:157348855076:ios:48f3682a757ba7aab887b1/config 200

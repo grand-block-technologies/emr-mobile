@@ -1,0 +1,64 @@
+name: emr_core
+description: Shared core for the EMR-MR crew and citizen apps (API, services, design system, auth).
+version: 1.0.0
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.11.0
+  flutter: ">=3.41.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  get: ^4.7.3
+  dio: ^5.11.1
+  retrofit: ^4.10.0
+  json_annotation: ^4.12.0
+  flutter_secure_storage: ^11.2.0
+  uuid: ^4.6.0
+  hive_ce: ^2.22.0
+  path_provider: ^2.1.5
+  connectivity_plus: ^6.1.4
+  stomp_dart_client: ^3.0.1
+  geolocator: ^14.1.1
+  url_launcher: ^6.3.3
+  lucide_icons_flutter: ^3.1.25
+  crypto: ^3.0.7
+  package_info_plus: ^10.2.2
+  intl: any
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  build_runner: any
+  retrofit_generator: ^10.2.12
+  json_serializable: any
+  mocktail: ^1.0.5
+  fake_async: any
+
+flutter:
+  fonts:
+    - family: IBMPlexSans
+      fonts:
+        - asset: assets/fonts/IBMPlexSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/IBMPlexSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/IBMPlexSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/IBMPlexSans-Bold.ttf
+          weight: 700
+    - family: IBMPlexSansArabic
+      fonts:
+        - asset: assets/fonts/IBMPlexSansArabic-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/IBMPlexSansArabic-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/IBMPlexSansArabic-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/IBMPlexSansArabic-Bold.ttf
+          weight: 700

@@ -1,0 +1,6 @@
+{
+  "API": "https://api.example.invalid",
+  "WS": "wss://api.example.invalid/ws",
+  "DEV_TOOLS": "false",
+  "TILES": "https://tiles.example.invalid/osm/{z}/{x}/{y}.png"
+}

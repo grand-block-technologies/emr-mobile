@@ -1,0 +1,28 @@
+{
+  "project_info": {
+    "project_number": "157348855076",
+    "project_id": "emr-mr-sudan-dev-8f311",
+    "storage_bucket": "emr-mr-sudan-dev-8f311.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:157348855076:android:dfffda131a95db94b887b1",
+        "android_client_info": {"package_name": "sd.gov.emr.citizen"}
+      },
+      "oauth_client": [],
+      "api_key": [{"current_key": "AIzaSyClJryFDW8QxUQznQsJhm9z_dLxylgeO9g"}],
+      "services": {"appinvite_service": {"other_platform_oauth_client": []}}
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:157348855076:android:cc469250f48712f1b887b1",
+        "android_client_info": {"package_name": "sd.gov.emr.crew"}
+      },
+      "oauth_client": [],
+      "api_key": [{"current_key": "AIzaSyClJryFDW8QxUQznQsJhm9z_dLxylgeO9g"}],
+      "services": {"appinvite_service": {"other_platform_oauth_client": []}}
+    }
+  ],
+  "configuration_version": "1"
+}

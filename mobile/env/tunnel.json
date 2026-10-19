@@ -1,0 +1,6 @@
+{
+  "API": "https://jay-algorithms-miniature-flat.trycloudflare.com",
+  "WS": "wss://scored-rotary-lite-cam.trycloudflare.com/ws",
+  "DEV_TOOLS": "true",
+  "TILES": "https://orange-remaining-city-wishlist.trycloudflare.com/styles/sudan/512/{z}/{x}/{y}.png"
+}
