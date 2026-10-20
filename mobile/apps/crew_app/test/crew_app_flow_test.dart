@@ -15,12 +15,25 @@ import 'package:get/get.dart';
 
 import 'helpers/fakes.dart';
 
+const driverMe = {
+  'id': 'u8',
+  'username': 'demo.driver1',
+  'fullNameAr': 'سائق الرياض',
+  'fullNameEn': 'Driver Riyadh',
+  'role': 'DRIVER',
+  'preferredLanguage': 'en',
+  'scopes': <Object>[],
+  'stateCodes': ['KH'],
+  'mustChangePassword': false,
+};
+
 const medicMe = {
   'id': 'u9',
   'username': 'demo.medic1',
   'fullNameAr': 'مسعف الرياض',
   'fullNameEn': 'Medic Riyadh',
   'role': 'PARAMEDIC',
+  'features': ['feature.crew_alerts'],
   'preferredLanguage': 'en',
   'scopes': <Object>[],
   'stateCodes': ['KH'],
@@ -71,10 +84,10 @@ Future<void> finish(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('fresh login → set PIN → start shift → new job alarm → swipe → steps → hospital alert', (tester) async {
+  testWidgets('fresh login → set PIN → start shift → new job alarm → swipe → steps', (tester) async {
     final b = await boot(tester);
     b.http.reply('POST /api/v1/auth/login', 200, {'step': 'signed_in', 'accessToken': 'at', 'refreshToken': 'rt'});
-    b.http.reply('GET /api/v1/me', 200, medicMe);
+    b.http.reply('GET /api/v1/me', 200, driverMe);
     b.http.reply('PUT /api/v1/crew/pin', 200, {'saved': true});
     b.http.reply('POST /api/v1/crew/shifts', 200, {'id': 's-1', 'ambulanceId': 'a-1'});
     // A tiny stateful server: the job reflects what the crew has sent.
@@ -88,10 +101,9 @@ void main() {
       serverStatus = (body! as Map)['status'] as String;
       return const FakeReply(200, {});
     });
-    b.http.reply('POST /api/v1/dispatches/d-1/alerts', 200, {'id': 'al-1'});
     await pumpCrew(tester);
 
-    await tester.enterText(find.byKey(const Key('login_username')), 'demo.medic1');
+    await tester.enterText(find.byKey(const Key('login_username')), 'demo.driver1');
     await tester.enterText(find.byKey(const Key('login_password')), 'Demo-Pass-2026');
     await tester.tap(find.byKey(const Key('login_submit')));
     await tester.pumpAndSettle();
@@ -110,8 +122,12 @@ void main() {
     // Start the shift with the code typed by hand.
     await tester.tap(find.text('Enter the code by hand'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('qr_manual')), 'AMB-QR-1');
+    await tester.enterText(find.byKey(const Key('qr_manual')), '482913');
     await tester.tap(find.byKey(const Key('qr_manual_start')));
+    await tester.pumpAndSettle();
+    // The "shift started" screen shows for two seconds, then the waiting screen.
+    expect(find.text('Shift started'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
     expect(find.text('Waiting for a job'), findsOneWidget);
     expect(find.text('On shift'), findsOneWidget);
@@ -142,18 +158,6 @@ void main() {
       ['en_route', 'on_scene'],
     );
 
-    // Pre-arrival alert with confirm.
-    // Centre the tile: at the very bottom of the list it sits next to the sticky step bar.
-    await Scrollable.ensureVisible(tester.element(find.byKey(const Key('alert_stroke'))), alignment: 0.5);
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('alert_stroke')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('alert_send')));
-    await tester.pumpAndSettle();
-    expect(b.http.bodiesOf('POST /api/v1/dispatches/d-1/alerts').single, {'type': 'stroke'});
-
-    // Paramedics see patient care.
-    expect(find.byKey(const Key('open_patients')), findsOneWidget);
     await finish(tester);
   });
 
@@ -200,6 +204,10 @@ void main() {
     b.http.reply('POST /api/v1/auth/refresh', 200, {'accessToken': 'at', 'refreshToken': 'rt'});
     b.http.reply('POST /api/v1/crew/pin/verify', 200, {'verified': true});
     b.http.reply('GET /api/v1/crew/job', 200, jobWith('en_route'));
+    // The app asks for the current shift when unlocking; without one the crew is off shift.
+    b.http.reply('GET /api/v1/crew/shifts/current', 200, {
+      'shift': {'id': 's-1', 'ambulanceId': 'a-1', 'plateNumber': 'DEMO-11', 'crew': <Object>[]},
+    });
     await pumpCrew(tester);
 
     await tester.enterText(find.byKey(const Key('pin')), '1357');

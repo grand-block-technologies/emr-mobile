@@ -180,7 +180,7 @@ void main() {
 
     final fields = find.byType(TextField);
     await tester.enterText(fields.at(0), 'Demo-Pass-2026');
-    await tester.enterText(fields.at(1), 'NewPass2026');
+    await tester.enterText(fields.at(1), 'NewPass2026-Long9');
     await tester.enterText(fields.at(2), 'Different2026');
     await tester.ensureVisible(find.text('حفظ'));
     await tester.tap(find.text('حفظ'));
@@ -188,7 +188,7 @@ void main() {
     expect(find.text('كلمتا المرور غير متطابقتين.'), findsOneWidget);
     expect(core.http.calls('POST /api/v1/auth/change-password'), isEmpty);
 
-    await tester.enterText(fields.at(2), 'NewPass2026');
+    await tester.enterText(fields.at(2), 'NewPass2026-Long9');
     await tester.ensureVisible(find.text('حفظ'));
     await tester.tap(find.text('حفظ'));
     await tester.pumpAndSettle();
@@ -254,13 +254,13 @@ void main() {
 
     final fields = find.byType(TextField);
     await tester.enterText(fields.at(0), '654321');
-    await tester.enterText(fields.at(1), 'NewPass2026');
-    await tester.enterText(fields.at(2), 'NewPass2026');
+    await tester.enterText(fields.at(1), 'NewPass2026-Long9');
+    await tester.enterText(fields.at(2), 'NewPass2026-Long9');
     await tester.ensureVisible(find.text('حفظ'));
     await tester.tap(find.text('حفظ'));
     await tester.pumpAndSettle();
 
-    expect(core.http.bodies.last, {'challengeId': 'ch-9', 'code': '654321', 'newPassword': 'NewPass2026'});
+    expect(core.http.bodies.last, {'challengeId': 'ch-9', 'code': '654321', 'newPassword': 'NewPass2026-Long9'});
     expect(find.text('تم تعيين كلمة المرور. سجّل الدخول الآن.'), findsOneWidget);
   });
 

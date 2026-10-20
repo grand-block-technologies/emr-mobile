@@ -7,7 +7,8 @@ import '../../data/citizen_repository.dart';
 
 /// Paged list of the citizen's requests (use `hasNext`; `totalElements` can be null).
 class RequestsController extends GetxController {
-  RequestsController({required CitizenRepository repo, this.pageSize = 10}) : _repo = repo;
+  RequestsController({required CitizenRepository repo, this.pageSize = 10})
+    : _repo = repo;
 
   final CitizenRepository _repo;
   final int pageSize;
@@ -59,8 +60,11 @@ class RequestsController extends GetxController {
 /// One request. There is no live channel for citizens: poll while the screen is open,
 /// stop once the request is closed.
 class RequestDetailController extends GetxController {
-  RequestDetailController({required CitizenRepository repo, required this.id, this.pollEvery = const Duration(seconds: 12)})
-      : _repo = repo;
+  RequestDetailController({
+    required CitizenRepository repo,
+    required this.id,
+    this.pollEvery = const Duration(seconds: 12),
+  }) : _repo = repo;
 
   final CitizenRepository _repo;
   final String id;

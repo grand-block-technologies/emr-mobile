@@ -35,6 +35,12 @@ class FakeAdapter implements HttpClientAdapter {
     reply(route, status, body);
   }
 
+  /// Replaces whatever is queued for [route] with a transport failure.
+  void setOffline(String route) {
+    _routes.remove(route);
+    on(route, (_, _) => const FakeReply.offline());
+  }
+
   List<RequestOptions> calls(String route) =>
       requests.where((r) => '${r.method} ${r.uri.path}' == route).toList();
   List<Object?> bodiesOf(String route) => [

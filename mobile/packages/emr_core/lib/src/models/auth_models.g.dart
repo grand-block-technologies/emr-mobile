@@ -109,6 +109,9 @@ Me _$MeFromJson(Map<String, dynamic> json) => Me(
           .toList() ??
       const [],
   mustChangePassword: json['mustChangePassword'] as bool? ?? false,
+  features:
+      (json['features'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      [],
 );
 
 Map<String, dynamic> _$MeToJson(Me instance) => <String, dynamic>{
@@ -121,6 +124,7 @@ Map<String, dynamic> _$MeToJson(Me instance) => <String, dynamic>{
   'scopes': instance.scopes.map((e) => e.toJson()).toList(),
   'stateCodes': instance.stateCodes,
   'mustChangePassword': instance.mustChangePassword,
+  'features': instance.features,
 };
 
 Map<String, dynamic> _$PushTokenBodyToJson(PushTokenBody instance) =>

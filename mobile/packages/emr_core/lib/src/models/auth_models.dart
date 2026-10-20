@@ -165,6 +165,7 @@ class Me {
     this.scopes = const [],
     this.stateCodes = const [],
     this.mustChangePassword = false,
+    this.features = const [],
   });
 
   factory Me.fromJson(Map<String, dynamic> json) => _$MeFromJson(json);
@@ -179,6 +180,13 @@ class Me {
   final List<String> stateCodes;
   @JsonKey(defaultValue: false)
   final bool mustChangePassword;
+
+  /// Features switched on by the admin, e.g. `feature.crew_alerts`.
+  @JsonKey(defaultValue: <String>[])
+  final List<String> features;
+
+  bool hasFeature(String f) => features.contains(f);
+  bool get alertsEnabled => hasFeature('feature.crew_alerts');
 
   bool get isDriver => role == 'DRIVER';
   bool get isParamedic => role == 'PARAMEDIC';

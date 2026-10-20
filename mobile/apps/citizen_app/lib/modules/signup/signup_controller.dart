@@ -45,7 +45,7 @@ class SignUpController extends GetxController with FormStatus {
     final ok = applyLocal({
       'code': Validators.smsCode(code.trim()),
       'nationalId': Validators.nationalId(nationalId),
-      'fullNameAr': Validators.required(fullNameAr),
+      'fullNameAr': Validators.arabicName(fullNameAr),
       'password': Validators.password(password),
       'repeat': password == repeat ? null : 'v_password_match',
     });

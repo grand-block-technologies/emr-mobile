@@ -263,7 +263,35 @@ void main() {
       });
       final c = HistoryController(repo: r.repo);
       await c.reload();
-      expect(c.rows.single.title('en'), 'KH-1');
+      expect(c.history.value.visits.content.single.title('en'), 'KH-1', reason: 'an older single-page answer is read as the visits');
+    });
+
+    test('history is four pages: visits, diagnoses, check results, conditions', () async {
+      Map<String, Object?> page(List<Map<String, Object?>> rows, {bool next = false}) => {'content': rows, 'hasNext': next};
+      r.http.reply('GET /api/v1/citizen/history', 200, {
+        'patientId': 'p-1',
+        'visits': page([
+          {'id': 'v1', 'startedAt': '2026-10-01T10:00:00Z', 'endedAt': null, 'endType': null, 'dischargeNote': 'Home'},
+        ], next: true),
+        'diagnoses': page([
+          {'id': 'd1', 'icd10Code': 'S82', 'description': 'Fracture', 'kind': 'final', 'recordedAt': '2026-10-01T10:00:00Z'},
+        ]),
+        'checkResults': page([
+          {'id': 'c1', 'checkCode': 'HB', 'resultValue': '12', 'resultUnit': 'g/dL', 'doneAt': '2026-10-01T10:00:00Z'},
+        ]),
+        'conditions': page([
+          {'id': 'k1', 'kind': 'allergy', 'name': 'Penicillin', 'recordedAt': '2026-10-01T10:00:00Z'},
+        ]),
+      });
+      final c = HistoryController(repo: r.repo);
+      await c.reload();
+      final h = c.history.value;
+      expect(h.patientId, 'p-1');
+      expect(h.visits.content, hasLength(1));
+      expect(h.diagnoses.content.single.raw['description'], 'Fracture');
+      expect(h.checkResults.content.single.raw['resultValue'], '12');
+      expect(h.conditions.content.single.raw['kind'], 'allergy');
+      expect(c.hasNext, isTrue);
     });
 
     test('profile falls back to the cached copy offline', () async {
@@ -282,6 +310,22 @@ void main() {
     late Rig r;
     setUp(() => r = Rig());
 
+    test('the Arabic name must have Arabic letters, and the password at least 12 characters', () async {
+      final c = SignUpController(repo: r.repo);
+      c.challengeId.value = 'ch-1';
+      expect(
+        await c.finish(code: '123456', nationalId: '1234567', fullNameAr: 'Ahmed Ali', fullNameEn: '', password: 'Pass2026-Long9', repeat: 'Pass2026-Long9'),
+        isFalse,
+      );
+      expect(c.fieldErrors.keys, ['fullNameAr']);
+      expect(
+        await c.finish(code: '123456', nationalId: '1234567', fullNameAr: 'أحمد علي', fullNameEn: '', password: 'Pass2026x', repeat: 'Pass2026x'),
+        isFalse,
+      );
+      expect(c.fieldErrors.keys, ['password'], reason: '9 characters are refused by the server');
+      expect(r.http.requests, isEmpty);
+    });
+
     test('normalises the phone, then finishes with every field', () async {
       r.http.reply('POST /api/v1/citizen/sign-up/start', 200, {'challengeId': 'ch-1', 'expiresAt': '2026-10-15T09:05:00Z'});
       r.http.reply('POST /api/v1/citizen/sign-up/finish', 200, {'id': 'u', 'identityStatus': 'phone_verified', 'linkedPatient': false});
@@ -294,15 +338,15 @@ void main() {
       expect(c.codeSent, isTrue);
 
       expect(
-        await c.finish(code: '123456', nationalId: '1234567', fullNameAr: 'أحمد', fullNameEn: '', password: 'Pass2026x', repeat: 'nope'),
+        await c.finish(code: '123456', nationalId: '1234567', fullNameAr: 'أحمد', fullNameEn: '', password: 'Pass2026-Long9', repeat: 'nope'),
         isFalse,
       );
       expect(c.fieldErrors.keys, ['repeat']);
       expect(
-        await c.finish(code: '123456', nationalId: '1234567', fullNameAr: 'أحمد', fullNameEn: '', password: 'Pass2026x', repeat: 'Pass2026x'),
+        await c.finish(code: '123456', nationalId: '1234567', fullNameAr: 'أحمد', fullNameEn: '', password: 'Pass2026-Long9', repeat: 'Pass2026-Long9'),
         isTrue,
       );
-      expect(r.http.bodies.last, {'challengeId': 'ch-1', 'code': '123456', 'nationalId': '1234567', 'fullNameAr': 'أحمد', 'password': 'Pass2026x'});
+      expect(r.http.bodies.last, {'challengeId': 'ch-1', 'code': '123456', 'nationalId': '1234567', 'fullNameAr': 'أحمد', 'password': 'Pass2026-Long9'});
     });
 
     test('an existing account offers "sign in" instead', () async {

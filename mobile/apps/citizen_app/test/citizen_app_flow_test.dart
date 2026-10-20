@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:citizen_app/app/citizen_app.dart';
 import 'package:citizen_app/app/citizen_routes.dart';
 import 'package:citizen_app/app/citizen_translations.dart';
+import 'package:citizen_app/modules/sos/sos_controller.dart';
 import 'package:citizen_app/modules/sos/sos_view.dart';
 import 'package:citizen_app/services/sos_locator.dart';
 import 'package:emr_core/emr_core.dart';
@@ -106,6 +108,46 @@ void main() {
     await finish(tester);
   });
 
+  testWidgets('a closed request: no "keep your phone free", no hospital steps ticked, the server text shown', (tester) async {
+    final http = await boot(tester);
+    http.reply('POST /api/v1/auth/login', 200, {'step': 'signed_in', 'accessToken': 'at', 'refreshToken': 'rt'});
+    http.reply('GET /api/v1/me', 200, {...citizenMe, 'preferredLanguage': 'en'});
+    http.reply('GET /api/v1/citizen/me', 200, {'fullNameEn': 'Demo', 'phone': '+249912345003', 'identityStatus': 'phone_verified'});
+    http.reply('GET /api/v1/citizen/requests', 200, {'content': <Object>[], 'hasNext': false});
+    http.reply('GET /api/v1/citizen/requests/req-9', 200, {
+      'statusCode': 'closed',
+      'statusAr': 'أُغلق الطلب',
+      'statusEn': 'Request closed',
+      'updatedAt': '2026-10-15T07:00:00Z',
+      'reachedSteps': [
+        {'code': 'received', 'at': '2026-10-15T06:30:00Z'},
+        {'code': 'hospital_accepted', 'at': '2026-10-15T06:35:00Z'},
+        {'code': 'ambulance_coming', 'at': '2026-10-15T06:36:00Z'},
+        {'code': 'ambulance_arrived', 'at': '2026-10-15T06:50:00Z'},
+        {'code': 'closed', 'at': '2026-10-15T07:00:00Z'},
+      ],
+      'closingReason': 'treated_at_scene',
+      'closingReasonAr': 'عولج في الموقع',
+      'closingReasonEn': 'Treated at the scene',
+    });
+    await tester.enterText(find.byKey(const Key('login_username')), 'demo.citizen');
+    await tester.enterText(find.byKey(const Key('login_password')), 'Demo-Pass-2026');
+    await tester.tap(find.byKey(const Key('login_submit')));
+    await tester.pumpAndSettle();
+
+    unawaited(Get.toNamed<void>(CitizenRoutes.request, arguments: const RequestArgs('req-9', justSent: true)));
+    await tester.pumpAndSettle();
+    expect(find.text('Keep your phone free, the call centre will call you.'), findsNothing);
+    expect(find.text('Request closed'), findsWidgets);
+    expect(find.text('On the way to hospital'), findsNothing, reason: 'treated at the scene: never reached');
+    expect(find.text('Ambulance arrived'), findsOneWidget, reason: 'reached steps are shown');
+    expect(find.text('Finding a hospital'), findsNothing, reason: 'not in reachedSteps');
+    expect(find.byKey(const Key('closing_reason')), findsOneWidget);
+    expect(find.text('Treated at the scene'), findsOneWidget);
+    expect(find.text('Call 999'), findsNothing);
+    await finish(tester);
+  });
+
   testWidgets('sign-up: phone → details → back to login with the phone filled in', (tester) async {
     final http = await boot(tester);
     http.reply('POST /api/v1/citizen/sign-up/start', 200, {'challengeId': 'ch-1'});
@@ -120,8 +162,8 @@ void main() {
     await tester.enterText(find.byKey(const Key('signup_code')), '123456');
     await tester.enterText(find.byKey(const Key('signup_nid')), '1234567');
     await tester.enterText(find.byKey(const Key('signup_name_ar')), 'أحمد علي');
-    await tester.enterText(find.byKey(const Key('signup_pass')), 'Pass2026x');
-    await tester.enterText(find.byKey(const Key('signup_repeat')), 'Pass2026x');
+    await tester.enterText(find.byKey(const Key('signup_pass')), 'Pass2026-Long9');
+    await tester.enterText(find.byKey(const Key('signup_repeat')), 'Pass2026-Long9');
     await tester.ensureVisible(find.byKey(const Key('signup_finish')));
     await tester.tap(find.byKey(const Key('signup_finish')));
     await tester.pumpAndSettle();

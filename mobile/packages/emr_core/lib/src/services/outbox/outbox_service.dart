@@ -15,6 +15,36 @@ class OutboxFailure {
   final ApiError error;
 }
 
+/// A clinical write the server refused. It stays here until the paramedic fixes and resends
+/// it, or deletes it on purpose.
+class RejectedItem {
+  const RejectedItem(this.item, this.error, this.rejectedAt);
+
+  factory RejectedItem.fromJson(Map<String, dynamic> j) => RejectedItem(
+        OutboxItem.fromJson(Map<String, dynamic>.from(j['item'] as Map)),
+        ApiError(
+          status: j['status'] as int? ?? 400,
+          code: j['code'] as String? ?? 'UNEXPECTED',
+          ar: j['ar'] as String? ?? '',
+          en: j['en'] as String? ?? '',
+        ),
+        DateTime.parse(j['rejectedAt'] as String),
+      );
+
+  final OutboxItem item;
+  final ApiError error;
+  final DateTime rejectedAt;
+
+  Map<String, dynamic> toJson() => {
+        'item': item.toJson(),
+        'status': error.status,
+        'code': error.code,
+        'ar': error.ar,
+        'en': error.en,
+        'rejectedAt': rejectedAt.toIso8601String(),
+      };
+}
+
 /// A queued write the server accepted (or replayed from its idempotency record).
 class OutboxDone {
   const OutboxDone(this.item, this.data);
@@ -24,9 +54,12 @@ class OutboxDone {
 
 /// Snapshot for the sync banner: "Online · all sent", "Offline · 3 waiting", "Sending 2 of 3".
 class SyncState {
-  const SyncState({this.pending = 0, this.sendingIndex = 0, this.sendingTotal = 0, this.blocked = false});
+  const SyncState({this.pending = 0, this.sendingIndex = 0, this.sendingTotal = 0, this.blocked = false, this.rejected = 0});
 
   final int pending;
+
+  /// Clinical writes the server refused and the paramedic has not fixed or deleted yet.
+  final int rejected;
 
   /// 1-based position of the item in flight, or 0 when idle.
   final int sendingIndex;
@@ -36,14 +69,15 @@ class SyncState {
   final bool blocked;
 
   bool get isSending => sendingIndex > 0;
-  bool get allSent => pending == 0;
+  bool get allSent => pending == 0 && rejected == 0;
 }
 
 /// Ordered, persistent, idempotent queue for crew writes (NFR-05: nothing lost or doubled).
 ///
 /// * Items are sent strictly in order; a retryable failure stops the queue so order is kept.
 /// * Every retry reuses the item's key and body. The body is frozen after the first attempt.
-/// * A 4xx is permanent: the item is dropped and reported on [failures].
+/// * A 4xx is permanent: the item leaves the queue and is reported on [failures]. A clinical
+///   write is also kept in [rejected] until the paramedic fixes and resends it or deletes it.
 /// * `{ref:name}` placeholders let a later item use an earlier item's server id.
 class OutboxService extends GetxService {
   OutboxService({
@@ -58,6 +92,7 @@ class OutboxService extends GetxService {
 
   static const _itemPrefix = 'item:';
   static const _refPrefix = 'ref:';
+  static const _rejPrefix = 'rej:';
   static const _seqKey = 'meta:seq';
   static const maxGpsBatch = 500;
 
@@ -73,6 +108,9 @@ class OutboxService extends GetxService {
   final _done = StreamController<OutboxDone>.broadcast();
   final Map<String, String> _refs = {};
 
+  /// Refused clinical writes, oldest first (the "Not sent" list).
+  final rejected = <RejectedItem>[].obs;
+
   Stream<OutboxFailure> get failures => _failures.stream;
   Stream<OutboxDone> get completed => _done.stream;
 
@@ -86,15 +124,20 @@ class OutboxService extends GetxService {
   Future<void> load() async {
     if (_loaded) return;
     final loaded = <OutboxItem>[];
+    final refused = <RejectedItem>[];
     for (final k in await _store.keys()) {
       final v = await _store.get(k);
       if (k.startsWith(_itemPrefix) && v is Map) {
         loaded.add(OutboxItem.fromJson(Map<String, dynamic>.from(v)));
       } else if (k.startsWith(_refPrefix) && v is String) {
         _refs[k.substring(_refPrefix.length)] = v;
+      } else if (k.startsWith(_rejPrefix) && v is Map) {
+        refused.add(RejectedItem.fromJson(Map<String, dynamic>.from(v)));
       }
     }
     loaded.sort((a, b) => a.seq.compareTo(b.seq));
+    refused.sort((a, b) => a.item.seq.compareTo(b.item.seq));
+    rejected.assignAll(refused);
     _seq = (await _store.get(_seqKey) as int?) ?? (loaded.isEmpty ? 0 : loaded.last.seq);
     items.assignAll(loaded);
     _loaded = true;
@@ -166,14 +209,26 @@ class OutboxService extends GetxService {
     _retryTimer?.cancel();
     final total = items.length;
     var index = 0;
-    while (items.isNotEmpty) {
-      final item = items.first;
+    // Items that failed for a retryable reason. Order is kept for everything behind them, except
+    // handovers: an earlier change stuck in the queue must never hold a handover back.
+    final held = <OutboxItem>[];
+    while (true) {
+      final item = items.cast<OutboxItem?>().firstWhere(
+            (i) => !held.contains(i) && (held.isEmpty || i!.kind == OutboxKind.handover),
+            orElse: () => null,
+          );
+      if (item == null) break;
       index++;
       _inFlight = item;
-      sync.value = SyncState(pending: items.length, sendingIndex: index, sendingTotal: total > index ? total : index);
+      sync.value = SyncState(pending: items.length, sendingIndex: index, sendingTotal: total > index ? total : index, rejected: rejected.length);
 
       final path = OutboxRef.resolve(item.path, _refs);
       final body = OutboxRef.resolve(item.body, _refs);
+      if (held.isNotEmpty && (!path.ok || !body.ok)) {
+        // Needs something still queued behind a held item: wait for it, do not drop.
+        held.add(item);
+        continue;
+      }
       if (!path.ok || !body.ok) {
         // The item this one depends on was refused, so this one can never succeed.
         await _drop(item, const ApiError(
@@ -204,15 +259,18 @@ class OutboxService extends GetxService {
         }
         if (err.isRetryable || err.status == 401) {
           // Offline, server busy, or the session is being refreshed: keep order and retry later.
-          _inFlight = null;
-          sync.value = SyncState(pending: items.length, blocked: true);
-          _scheduleRetry();
-          return;
+          held.add(item);
+          continue;
         }
         await _drop(item, err);
       }
     }
     _inFlight = null;
+    if (held.isNotEmpty) {
+      sync.value = SyncState(pending: items.length, blocked: true, rejected: rejected.length);
+      _scheduleRetry();
+      return;
+    }
     _publish();
   }
 
@@ -227,8 +285,37 @@ class OutboxService extends GetxService {
 
   Future<void> _drop(OutboxItem item, ApiError error) async {
     await _remove(item);
+    if (clinicalOutboxKinds.contains(item.kind)) {
+      final r = RejectedItem(item, error, _now().toUtc());
+      await _store.put(_rejKeyOf(item), r.toJson());
+      rejected.add(r);
+      _publish();
+    }
     _failures.add(OutboxFailure(item, error));
   }
+
+  /// Sends a refused write again as a new action (new idempotency key), optionally with a
+  /// corrected [body]. Keeps the same `resultRef` so later items that point to it still work.
+  Future<void> retryRejected(RejectedItem r, {Object? body}) async {
+    await _forget(r);
+    await add(r.item.kind, r.item.path, body ?? r.item.body, method: r.item.method, resultRef: r.item.resultRef);
+  }
+
+  /// The paramedic chose to delete a refused write.
+  Future<void> discardRejected(RejectedItem r) async {
+    await _forget(r);
+    _publish();
+  }
+
+  Future<void> _forget(RejectedItem r) async {
+    await _store.delete(_rejKeyOf(r.item));
+    rejected.remove(r);
+    _publish();
+  }
+
+  /// Queued clinical writes (patient, vitals, treatment, handover) that would be refused with
+  /// `403 PATIENT_ACCESS_DENIED` once the job is over.
+  int get pendingClinical => items.where((i) => clinicalOutboxKinds.contains(i.kind)).length;
 
   Future<void> _remove(OutboxItem item) async {
     await _store.delete(_keyOf(item));
@@ -253,15 +340,18 @@ class OutboxService extends GetxService {
   Future<void> clear() async {
     _retryTimer?.cancel();
     items.clear();
+    rejected.clear();
     _refs.clear();
     _seq = 0;
     await _store.clear();
     _publish();
   }
 
-  void _publish() => sync.value = SyncState(pending: items.length, blocked: sync.value.blocked && items.isNotEmpty);
+  void _publish() =>
+      sync.value = SyncState(pending: items.length, blocked: sync.value.blocked && items.isNotEmpty, rejected: rejected.length);
 
   String _keyOf(OutboxItem i) => '$_itemPrefix${i.seq.toString().padLeft(12, '0')}';
+  String _rejKeyOf(OutboxItem i) => '$_rejPrefix${i.seq.toString().padLeft(12, '0')}';
   Future<void> _persist(OutboxItem i) => _store.put(_keyOf(i), i.toJson());
 
   @override

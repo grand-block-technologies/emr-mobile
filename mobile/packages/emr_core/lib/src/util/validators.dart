@@ -5,12 +5,21 @@ import 'format.dart';
 abstract final class Validators {
   static String? required(String? v) => (v == null || v.trim().isEmpty) ? 'v_required' : null;
 
-  /// 8–72 characters with at least one letter and one digit.
-  static String? password(String? v) {
+  /// 12–72 characters with at least one letter and one digit, not containing the [username]
+  /// (the server refuses anything shorter with "This value is not valid" and no hint).
+  static String? password(String? v, {String? username}) {
     if (v == null || v.isEmpty) return 'v_required';
-    if (v.length < 8 || v.length > 72) return 'v_password_length';
+    if (v.length < 12 || v.length > 72) return 'v_password_length';
     if (!RegExp(r'[A-Za-z؀-ۿ]').hasMatch(v) || !RegExp(r'\d').hasMatch(v)) return 'v_password_mix';
+    final u = username?.trim().toLowerCase() ?? '';
+    if (u.isNotEmpty && v.toLowerCase().contains(u)) return 'v_password_username';
     return null;
+  }
+
+  /// The Arabic name must contain Arabic letters (any text used to be accepted).
+  static String? arabicName(String? v) {
+    if (v == null || v.trim().isEmpty) return 'v_required';
+    return RegExp(r'[\u0621-\u064A]').hasMatch(v) ? null : 'v_arabic_name';
   }
 
   static String? smsCode(String? v) => RegExp(r'^\d{6}$').hasMatch(v ?? '') ? null : 'v_sms_code';

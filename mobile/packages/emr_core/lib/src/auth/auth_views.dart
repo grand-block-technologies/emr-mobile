@@ -357,7 +357,9 @@ class _SmsCodeViewState extends State<SmsCodeView> {
   void initState() {
     super.initState();
     final phones = Get.find<AuthFlow>().config.devPhones;
-    _devPhone.text = phones[c.username] ?? c.username;
+    // Never the username: only a known phone, or the username when that is itself a phone number.
+    final u = c.username.trim();
+    _devPhone.text = phones[u] ?? (RegExp(r'^\+?\d{8,15}$').hasMatch(u) ? u : '');
   }
 
   @override

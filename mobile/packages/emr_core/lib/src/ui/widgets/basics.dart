@@ -25,7 +25,7 @@ class LtrText extends StatelessWidget {
 
 enum ButtonVariant { primary, secondary, ghost, danger }
 
-/// 44-high button. While [busy], keeps its width, shows a spinner and ignores taps.
+/// 48-high button (Material minimum touch target). While [busy], keeps its width, shows a spinner and ignores taps.
 class AppButton extends StatelessWidget {
   const AppButton({
     required this.label,
@@ -81,13 +81,17 @@ class AppButton extends StatelessWidget {
     final onTap = busy ? () {} : onPressed;
     final size = Size(expand ? double.infinity : Space.minTarget, height);
     final button = switch (variant) {
-      ButtonVariant.primary => FilledButton(onPressed: onTap, style: FilledButton.styleFrom(minimumSize: size), child: content),
+      ButtonVariant.primary => FilledButton(
+          onPressed: onTap,
+          style: FilledButton.styleFrom(minimumSize: size, disabledBackgroundColor: AppColors.brand),
+          child: content,
+        ),
       ButtonVariant.danger => FilledButton(
           onPressed: onTap,
           style: FilledButton.styleFrom(
             minimumSize: size,
             backgroundColor: AppColors.danger,
-            disabledBackgroundColor: AppColors.danger.withValues(alpha: 0.6),
+            disabledBackgroundColor: AppColors.danger,
           ).copyWith(overlayColor: const WidgetStatePropertyAll(Color(0xFF7D1812))),
           child: content,
         ),
@@ -252,6 +256,7 @@ class LabeledField extends StatelessWidget {
     OutlineInputBorder border(Color c, [double w = 1]) =>
         OutlineInputBorder(borderRadius: radius, borderSide: BorderSide(color: c, width: w));
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.ink)),

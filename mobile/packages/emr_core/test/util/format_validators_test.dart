@@ -10,13 +10,27 @@ void main() {
 
   group('Phone', () {
     test('normalises the ways people type a Sudan mobile number', () {
-      for (final input in ['0912345003', '912345003', '+249912345003', '249912345003', '00249912345003', '091 234 5003', '091-234-5003']) {
+      for (final input in [
+        '0912345003',
+        '912345003',
+        '+249912345003',
+        '249912345003',
+        '00249912345003',
+        '091 234 5003',
+        '091-234-5003',
+      ]) {
         expect(Phone.toE164(input), '+249912345003', reason: input);
       }
     });
 
     test('rejects numbers that are not Sudan mobiles', () {
-      for (final input in ['', '12345', '0812345003', '+971501234567', '09123450031']) {
+      for (final input in [
+        '',
+        '12345',
+        '0812345003',
+        '+971501234567',
+        '09123450031',
+      ]) {
         expect(Phone.toE164(input), isNull, reason: input);
       }
     });
@@ -36,36 +50,80 @@ void main() {
 
     test('age buckets', () {
       final now = DateTime.utc(2026, 10, 15, 12);
-      expect(SudanTime.age(now.subtract(const Duration(seconds: 20)), now), (value: 20, unit: 's'));
-      expect(SudanTime.age(now.subtract(const Duration(minutes: 3)), now), (value: 3, unit: 'm'));
-      expect(SudanTime.age(now.subtract(const Duration(hours: 4)), now), (value: 4, unit: 'h'));
-      expect(SudanTime.age(now.subtract(const Duration(days: 2)), now), (value: 2, unit: 'd'));
-      expect(SudanTime.age(now.add(const Duration(seconds: 5)), now).value, 0, reason: 'clock skew never goes negative');
+      expect(SudanTime.age(now.subtract(const Duration(seconds: 20)), now), (
+        value: 20,
+        unit: 's',
+      ));
+      expect(SudanTime.age(now.subtract(const Duration(minutes: 3)), now), (
+        value: 3,
+        unit: 'm',
+      ));
+      expect(SudanTime.age(now.subtract(const Duration(hours: 4)), now), (
+        value: 4,
+        unit: 'h',
+      ));
+      expect(SudanTime.age(now.subtract(const Duration(days: 2)), now), (
+        value: 2,
+        unit: 'd',
+      ));
+      expect(
+        SudanTime.age(now.add(const Duration(seconds: 5)), now).value,
+        0,
+        reason: 'clock skew never goes negative',
+      );
     });
 
     test('dates use Latin digits in Arabic; "when" drops the date for today', () {
       final t = DateTime.utc(2026, 10, 13, 8, 39);
-      expect(SudanTime.dateTime(t, 'ar'), '13 أكتوبر 2026 · 10:39');
+      // Arabic is wrapped in a right-to-left isolate so it reads correctly inside forced-LTR widgets.
+      expect(
+        SudanTime.dateTime(t, 'ar'),
+        '\u2067'
+        '13 أكتوبر 2026 · 10:39'
+        '\u2069',
+      );
       expect(SudanTime.dateTime(t, 'en'), '13 Oct 2026 · 10:39');
       expect(SudanTime.when(t, DateTime.utc(2026, 10, 13, 20), 'en'), '10:39');
-      expect(SudanTime.when(t, DateTime.utc(2026, 10, 15, 8), 'en'), '13 Oct 2026 · 10:39');
+      expect(
+        SudanTime.when(t, DateTime.utc(2026, 10, 15, 8), 'en'),
+        '13 Oct 2026 · 10:39',
+      );
       expect(latinDigits('٠١٢٣٤٥٦٧٨٩ ۰۹'), '0123456789 09');
     });
 
     test('isoUtc has second precision and Z', () {
-      expect(isoUtc(DateTime.utc(2026, 10, 13, 5, 44, 48, 123)), '2026-10-13T05:44:48Z');
-      expect(isoUtc(DateTime.utc(2026, 10, 13, 5, 44, 48).toLocal()), '2026-10-13T05:44:48Z');
+      expect(
+        isoUtc(DateTime.utc(2026, 10, 13, 5, 44, 48, 123)),
+        '2026-10-13T05:44:48Z',
+      );
+      expect(
+        isoUtc(DateTime.utc(2026, 10, 13, 5, 44, 48).toLocal()),
+        '2026-10-13T05:44:48Z',
+      );
     });
   });
 
   group('Validators', () {
     test('password policy: 8–72, a letter and a digit', () {
-      expect(Validators.password('abc12345'), isNull);
-      expect(Validators.password('كلمةسر123'), isNull, reason: 'Arabic letters count as letters');
+      expect(Validators.password('abc123456789'), isNull);
+      expect(
+        Validators.password('abc12345'),
+        'v_password_length',
+        reason: '8 to 11 characters are refused by the server',
+      );
+      expect(
+        Validators.password('demo.driver1-Pass9', username: 'demo.driver1'),
+        'v_password_username',
+      );
+      expect(
+        Validators.password('كلمةسرية123456'),
+        isNull,
+        reason: 'Arabic letters count as letters',
+      );
       expect(Validators.password('short1'), 'v_password_length');
       expect(Validators.password('a1${'x' * 71}'), 'v_password_length');
-      expect(Validators.password('onlyletters'), 'v_password_mix');
-      expect(Validators.password('12345678'), 'v_password_mix');
+      expect(Validators.password('onlyletterslong'), 'v_password_mix');
+      expect(Validators.password('123456789012'), 'v_password_mix');
       expect(Validators.password(''), 'v_required');
     });
 
@@ -90,20 +148,43 @@ void main() {
   group('Vitals', () {
     test('hard limits match the API', () {
       expect(Vitals.errors({'heartRate': 19}), {'heartRate': 'v_out_of_range'});
-      expect(Vitals.errors({'heartRate': 250, 'spo2': 40, 'temperatureC': 45, 'painScore': 0}), isEmpty);
+      expect(
+        Vitals.errors({
+          'heartRate': 250,
+          'spo2': 40,
+          'temperatureC': 45,
+          'painScore': 0,
+        }),
+        isEmpty,
+      );
       expect(Vitals.errors({'spo2': 101}), {'spo2': 'v_out_of_range'});
-      expect(Vitals.errors({'bloodGlucoseMmol': 0.4}), {'bloodGlucoseMmol': 'v_out_of_range'});
+      expect(Vitals.errors({'bloodGlucoseMmol': 0.4}), {
+        'bloodGlucoseMmol': 'v_out_of_range',
+      });
     });
 
     test('diastolic must be below systolic', () {
       expect(Vitals.errors({'systolic': 120, 'diastolic': 80}), isEmpty);
-      expect(Vitals.errors({'systolic': 80, 'diastolic': 80}), {'diastolic': 'v_diastolic_below_systolic'});
-      expect(Vitals.errors({'systolic': 120}), isEmpty, reason: 'one value alone is allowed');
+      expect(Vitals.errors({'systolic': 80, 'diastolic': 80}), {
+        'diastolic': 'v_diastolic_below_systolic',
+      });
+      expect(
+        Vitals.errors({'systolic': 120}),
+        isEmpty,
+        reason: 'one value alone is allowed',
+      );
     });
 
     test('unusual but allowed values need a confirm', () {
-      expect(Vitals.unusual({'heartRate': 140, 'spo2': 88, 'respRate': 16}), unorderedEquals(['heartRate', 'spo2']));
-      expect(Vitals.unusual({'heartRate': 300}), isEmpty, reason: 'out of range is an error, not a confirm');
+      expect(
+        Vitals.unusual({'heartRate': 140, 'spo2': 88, 'respRate': 16}),
+        unorderedEquals(['heartRate', 'spo2']),
+      );
+      expect(
+        Vitals.unusual({'heartRate': 300}),
+        isEmpty,
+        reason: 'out of range is an error, not a confirm',
+      );
       expect(Vitals.unusual({'heartRate': null}), isEmpty);
     });
   });
@@ -117,15 +198,28 @@ void main() {
 
     test('every validator key has a translation', () {
       final en = AppTranslations().keys['en']!;
-      for (final key in ['v_required', 'v_password_length', 'v_password_mix', 'v_sms_code', 'v_national_id', 'v_pin', 'v_phone', 'v_too_long', 'v_out_of_range', 'v_diastolic_below_systolic']) {
+      for (final key in [
+        'v_required',
+        'v_password_length',
+        'v_password_mix',
+        'v_sms_code',
+        'v_national_id',
+        'v_pin',
+        'v_phone',
+        'v_too_long',
+        'v_out_of_range',
+        'v_diastolic_below_systolic',
+      ]) {
         expect(en.containsKey(key), isTrue, reason: key);
       }
     });
 
     test('app keys override core keys', () {
-      final t = AppTranslations(extra: {
-        'en': {'retry': 'Try again'},
-      });
+      final t = AppTranslations(
+        extra: {
+          'en': {'retry': 'Try again'},
+        },
+      );
       expect(t.keys['en']!['retry'], 'Try again');
       expect(t.keys['ar']!['retry'], 'إعادة المحاولة');
     });

@@ -100,7 +100,7 @@ class CurrentShift {
 }
 
 /// `GET /api/v1/crew/job` returns `{"job": null}` or the job fields at the top level.
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class Job {
   const Job({
     this.dispatchId,
@@ -124,6 +124,7 @@ class Job {
     this.confirmedAt,
     this.statusTime,
     this.serverTime,
+    this.handovers = const [],
   });
 
   factory Job.fromJson(Map<String, dynamic> json) => _$JobFromJson(json);
@@ -167,6 +168,17 @@ class Job {
   /// as the accurate current time for countdowns.
   final DateTime? serverTime;
 
+  /// Handovers already sent on this job by anyone on the crew (server truth).
+  @JsonKey(defaultValue: <JobHandover>[])
+  final List<JobHandover> handovers;
+
+  JobHandover? handoverFor(String patientId) {
+    for (final h in handovers) {
+      if (h.patientId == patientId) return h;
+    }
+    return null;
+  }
+
   bool get hasJob => dispatchId != null;
   bool get hasLocation => lat != null && lon != null;
   JobStatus? get jobStatus => JobStatus.fromWire(status);
@@ -181,11 +193,22 @@ class Job {
   Map<String, dynamic> toJson() => _$JobToJson(this);
 }
 
-@JsonSerializable(createFactory: false)
+@JsonSerializable(createFactory: false, includeIfNull: false)
 class StatusBody {
-  const StatusBody({required this.status, required this.statusTime});
+  const StatusBody({
+    required this.status,
+    required this.statusTime,
+    this.noTransportReason,
+    this.note,
+  });
 
   final String status;
+
+  /// Why the patient was not taken to hospital. Sent only when completing from `on_scene`.
+  final String? noTransportReason;
+
+  /// Optional free text (up to 2000 characters) with [noTransportReason].
+  final String? note;
 
   /// The moment the crew pressed the button (ISO-8601 UTC), not the upload time.
   final String statusTime;
@@ -348,13 +371,13 @@ class ObservationBody {
   final int? correctsId;
   final String? note;
 
+  /// The server needs at least one real measurement. "On oxygen" and a diastolic alone
+  /// do not count, so they would be refused.
   bool get hasAnyValue =>
       heartRate != null ||
       respRate != null ||
       spo2 != null ||
-      onOxygen != null ||
       systolic != null ||
-      diastolic != null ||
       temperatureC != null ||
       consciousness != null ||
       bloodGlucoseMmol != null ||
@@ -389,4 +412,147 @@ class TreatmentBody {
   final int? correctsId;
 
   Map<String, dynamic> toJson() => _$TreatmentBodyToJson(this);
+}
+
+/// Why a job ended at the scene without taking the patient to hospital.
+enum NoTransportReason {
+  treatedAtScene('treated_at_scene'),
+  refused('refused'),
+  diedAtScene('died_at_scene'),
+  patientNotFound('patient_not_found'),
+  cancelledByCaller('cancelled_by_caller'),
+  falseAlarm('false_alarm');
+
+  const NoTransportReason(this.wire);
+  final String wire;
+
+  /// The app asks for a short note with this reason.
+  bool get noteRequired => this == refused;
+}
+
+/// `POST /api/v1/handovers`: the patient handover to the ER, required before `completed`.
+@JsonSerializable(createFactory: false)
+class HandoverBody {
+  const HandoverBody({
+    required this.caseId,
+    required this.dispatchId,
+    required this.patientId,
+    required this.summary,
+  });
+
+  final String caseId;
+  final String dispatchId;
+
+  /// Server id, or an outbox `{ref:…}` placeholder for a patient created offline.
+  final String patientId;
+
+  /// Required, up to 2000 characters.
+  final String summary;
+
+  static const maxSummary = 2000;
+
+  Map<String, dynamic> toJson() => _$HandoverBodyToJson(this);
+}
+
+/// One entry of `GET /api/v1/medicines`.
+@JsonSerializable()
+class Medicine {
+  const Medicine({required this.code, this.nameAr, this.nameEn});
+
+  factory Medicine.fromJson(Map<String, dynamic> json) =>
+      _$MedicineFromJson(json);
+
+  final String code;
+  final String? nameAr;
+  final String? nameEn;
+
+  String name(String lang) =>
+      (lang == 'en' ? nameEn : nameAr) ?? nameAr ?? nameEn ?? code;
+
+  Map<String, dynamic> toJson() => _$MedicineToJson(this);
+}
+
+/// A handover on the current job. `confirmed` means the ER received the patient.
+@JsonSerializable()
+class JobHandover {
+  const JobHandover({
+    this.id,
+    this.patientId,
+    this.fullNameAr,
+    this.fullNameEn,
+    this.temporaryLabel,
+    this.status,
+    this.handedAt,
+    this.receivedAt,
+  });
+
+  factory JobHandover.fromJson(Map<String, dynamic> json) =>
+      _$JobHandoverFromJson(json);
+
+  final String? id;
+  final String? patientId;
+  final String? fullNameAr;
+  final String? fullNameEn;
+  final String? temporaryLabel;
+  final String? status;
+  final DateTime? handedAt;
+
+  /// When the ER confirmed it.
+  final DateTime? receivedAt;
+
+  bool get received => status == 'confirmed';
+
+  String name(String lang) =>
+      (lang == 'en' ? fullNameEn : fullNameAr) ??
+      fullNameAr ??
+      fullNameEn ??
+      temporaryLabel ??
+      '';
+
+  Map<String, dynamic> toJson() => _$JobHandoverToJson(this);
+}
+
+/// A finished job of the crew member (`GET /crew/jobs`), from whichever phone they used.
+@JsonSerializable()
+class CrewPastJob {
+  const CrewPastJob({
+    required this.dispatchId,
+    this.caseId,
+    this.caseNumber,
+    this.priority,
+    this.complaint,
+    this.status,
+    this.sentAt,
+    this.completedAt,
+    this.closingReason,
+    this.hospitalAr,
+    this.hospitalEn,
+    this.plateNumber,
+  });
+
+  factory CrewPastJob.fromJson(Map<String, dynamic> json) =>
+      _$CrewPastJobFromJson(json);
+
+  final String dispatchId;
+  final String? caseId;
+  final String? caseNumber;
+  final String? priority;
+  final String? complaint;
+
+  /// `completed` or `cancelled`.
+  final String? status;
+  final DateTime? sentAt;
+  final DateTime? completedAt;
+
+  /// The case's closing reason once it is closed (e.g. `taken_to_hospital`, `false_alarm`).
+  final String? closingReason;
+  final String? hospitalAr;
+  final String? hospitalEn;
+  final String? plateNumber;
+
+  bool get cancelled => status == 'cancelled';
+  String? hospital(String lang) =>
+      (lang == 'en' ? hospitalEn : hospitalAr) ?? hospitalAr ?? hospitalEn;
+
+  Map<String, dynamic> toJson() => _$CrewPastJobToJson(this);
 }

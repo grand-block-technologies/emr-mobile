@@ -23,6 +23,9 @@ class SyncStatusChip extends StatelessWidget {
 
   static (String, Tone, IconData) describe({required bool online, required SyncState state}) {
     final n = '${state.pending}';
+    if (state.rejected > 0 && !state.isSending) {
+      return ('sync_not_sent'.trParams({'n': '${state.rejected}'}), Tone.danger, LucideIcons.circleAlert);
+    }
     if (state.isSending) {
       return (
         'sync_sending'.trParams({'i': '${state.sendingIndex}', 'n': '${state.sendingTotal}'}),
@@ -50,13 +53,20 @@ class SyncStatusChip extends StatelessWidget {
 class LiveSyncChip extends StatelessWidget {
   const LiveSyncChip({super.key});
 
+  /// Set by an app that can list the refused items. While any exist, tapping the chip calls it.
+  static VoidCallback? onNotSentTap;
+
   @override
   Widget build(BuildContext context) {
     final net = Get.find<ConnectivityService>();
     final outbox = Get.isRegistered<OutboxService>() ? Get.find<OutboxService>() : null;
-    return Obx(
-      () => SyncStatusChip(online: net.online.value, state: outbox?.sync.value ?? const SyncState()),
-    );
+    return Obx(() {
+      final state = outbox?.sync.value ?? const SyncState();
+      final chip = SyncStatusChip(online: net.online.value, state: state);
+      final tap = onNotSentTap;
+      if (tap == null || state.rejected == 0 || state.isSending) return chip;
+      return GestureDetector(key: const Key('sync_not_sent_tap'), behavior: HitTestBehavior.opaque, onTap: tap, child: chip);
+    });
   }
 }
 

@@ -107,3 +107,31 @@ Status key: ⬜ to test · 🔄 testing · ✅ pass · ❌ fail (see Issues) · 
 - 07:17 I16 (no feedback on sign out, reported by user) fixed and re-verified on device.
 - 07:38 UI modernisation installed; sign-in, PIN, crew job/settings, citizen SOS/requests/detail/family/account re-checked on device (screenshots). All functional checks above still pass (automated suites green).
 - 07:47 Sign-in screens redesigned (brand band, step strip, citizen emergency line); both apps' data cleared to view them — sign in again (crew PIN `2468` will be asked to be set/confirmed via "I have a PIN").
+
+
+---
+
+# Field-test fixes (2026-10-20) — M1 to M5
+
+Automated results (this machine, `flutter analyze` 0 issues in `emr_core`, `crew_app`, `citizen_app`):
+`emr_core` 136 passed, `crew_app` 96 passed, `citizen_app` 29 passed (after the Swagger recheck).
+
+| # | Check | Status | Notes |
+| --- | --- | --- | --- |
+| H1 | Paramedic hands the patient over at `at_hospital`, offline patient id resolves, "Handover sent" shows | ✅ automated | `field_fixes_test.dart` |
+| H2 | Driver alone: "Job completed" disabled until handover; with a paramedic only a hint; `HANDOVER_REQUIRED` opens the screen | ✅ automated | |
+| H3 | Paramedic job `at_hospital` → `completed` on a real phone, Arabic + English screenshots | ⬜ to test | needs a real phone and the backend |
+| H4 | Driver alone, same | ⬜ to test | |
+| E1 | Each of the six reasons sends `noTransportReason`; `refused` needs a note; only from `on_scene` | ✅ automated | |
+| E2 | Each reason ends a job on a real phone, case shows Closed with that reason | ⬜ to test | |
+| P1 | A picked medicine is sent as its `code` | ✅ automated | |
+| P2 | A refused write appears in "Not sent" with its reason, is marked "Not saved", can be fixed or deleted, chip never says "all sent" | ✅ automated | also `emr_core` outbox tests |
+| P3 | Same with the phone offline, then online, on a real phone | ⬜ to test | |
+| N1 | Alerts multi-select (two types = two alerts); hidden when the feature is off | ✅ automated | |
+| N2 | "Add vitals" registers an unknown patient once, then reuses it; oxygen/diastolic alone refused on the phone | ✅ automated | |
+| N3 | Request history from `GET /crew/jobs`, opens offline from the cache | ✅ automated | |
+| H5 | "Received by the ER" from `handovers[].status`; driver with a paramedic waits for the paramedic's handover | ✅ automated | |
+| M4 | 4.1 password 12 chars · 4.2 wait for driver · 4.3 join later · 4.5 10 s reload · 4.6 features · 4.7 shift code · 4.8 dev phone | ✅ automated (4.4, 4.5 by code; no timer test) | 4.4/4.5 not covered by a test |
+| M5 | 5.1 four history lists · 5.2 closed request (`reachedSteps`, closing reason) · 5.3 phone hint hidden · 5.4 Arabic name + 12 chars | ✅ automated | |
+
+The backend team reruns the live emulator test on the crew job and citizen SOS flows after M1 to M3 are merged.

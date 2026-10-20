@@ -45,17 +45,19 @@ class FamilyController extends GetxController with FormStatus {
 /// Medical history. Until the ID card (and family link) is verified at a hospital the server
 /// answers `403 CITIZEN_HISTORY_NOT_VERIFIED`; the view explains how to verify.
 class HistoryController extends GetxController {
-  HistoryController({required CitizenRepository repo, this.patientId}) : _repo = repo;
+  HistoryController({required CitizenRepository repo, this.patientId})
+    : _repo = repo;
 
   final CitizenRepository _repo;
   final String? patientId;
 
-  final rows = <HistoryRow>[].obs;
+  final history = const CitizenHistory().obs;
   final loading = false.obs;
   final error = Rxn<ApiError>();
   final notVerified = false.obs;
-  final hasNext = false.obs;
   int _page = 0;
+
+  bool get hasNext => history.value.hasNext;
 
   @override
   void onInit() {
@@ -68,10 +70,8 @@ class HistoryController extends GetxController {
     error.value = null;
     notVerified.value = false;
     try {
-      final p = await _repo.history(page: 0, patientId: patientId);
+      history.value = await _repo.history(page: 0, patientId: patientId);
       _page = 0;
-      rows.assignAll(p.content);
-      hasNext.value = p.hasNext;
     } on Object catch (e) {
       final err = ApiError.of(e);
       if (err.code == 'CITIZEN_HISTORY_NOT_VERIFIED') {
@@ -84,13 +84,27 @@ class HistoryController extends GetxController {
     }
   }
 
+  /// Next page of all four lists.
   Future<void> more() async {
-    if (!hasNext.value) return;
+    if (!hasNext) return;
     try {
-      final p = await _repo.history(page: _page + 1, patientId: patientId);
+      final n = await _repo.history(page: _page + 1, patientId: patientId);
       _page++;
-      rows.addAll(p.content);
-      hasNext.value = p.hasNext;
+      final h = history.value;
+      ApiPage<HistoryRow> join(ApiPage<HistoryRow> a, ApiPage<HistoryRow> b) =>
+          ApiPage(
+            content: [...a.content, ...b.content],
+            page: b.page,
+            size: b.size,
+            hasNext: b.hasNext,
+          );
+      history.value = CitizenHistory(
+        patientId: h.patientId,
+        visits: join(h.visits, n.visits),
+        diagnoses: join(h.diagnoses, n.diagnoses),
+        checkResults: join(h.checkResults, n.checkResults),
+        conditions: join(h.conditions, n.conditions),
+      );
     } on Object catch (e) {
       showToast(ApiError.of(e).message(currentLang()));
     }

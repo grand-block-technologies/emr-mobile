@@ -91,7 +91,7 @@ abstract final class Space {
   static const betweenCards = 24.0;
   static const controlRadius = 8.0;
   static const cardRadius = 12.0;
-  static const minTarget = 44.0;
+  static const minTarget = 48.0;
 }
 
 abstract final class Motion {

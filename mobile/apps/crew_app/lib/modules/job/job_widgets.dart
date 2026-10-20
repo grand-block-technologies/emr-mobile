@@ -83,80 +83,131 @@ class _JobAlertState extends State<JobAlert> {
     final j = widget.job;
     final lang = currentLang();
     final p = Priority.fromCode(j.priority);
-    const onDark = TextStyle(color: Colors.white);
-    return Container(
-      color: p == Priority.p1 || p == Priority.p2
-          ? p!.fill
-          : AppColors.brandActive,
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(Space.xxl),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  const Icon(
-                    LucideIcons.bellRing,
-                    color: Colors.white,
-                    size: 28,
-                  ),
-                  const SizedBox(width: Space.md),
-                  Expanded(
-                    child: Text(
-                      'new_job'.tr,
-                      style: onDark.copyWith(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w600,
+    final t = Theme.of(context).textTheme;
+    final landmark = j.landmark(lang);
+    final hospital = j.hospital(lang);
+    final hasDetails = landmark != null || j.directions != null || hospital != null;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      // The background is always dark: light clock and battery icons stay readable.
+      value: SystemUiOverlayStyle.light,
+      child: Container(
+        color: p == Priority.p1 || p == Priority.p2 ? p!.fill : AppColors.brandActive,
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(Space.xxl, Space.lg, Space.xxl, Space.xxl),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Semantics(
+                  header: true,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: const BoxDecoration(color: Color(0x33FFFFFF), shape: BoxShape.circle),
+                        child: const Icon(LucideIcons.bellRing, color: Colors.white, size: 26),
                       ),
+                      const SizedBox(width: Space.md),
+                      Expanded(
+                        child: Text(
+                          'new_job'.tr,
+                          style: t.headlineSmall!.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      if (p != null)
+                        // A white ring keeps the badge visible on a red P1/P2 background.
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: PriorityPill(p),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: Space.xxl),
+                if (j.confirmDeadlineAt != null)
+                  JobConfirmDeadline(deadline: j.confirmDeadlineAt!, clockOffset: widget.clockOffset),
+                const SizedBox(height: Space.xxl),
+                if (j.complaint != null)
+                  Text(
+                    j.complaint!,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: t.displaySmall!.copyWith(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 30, height: 1.2),
+                  ),
+                if (j.caseNumber != null) ...[
+                  const SizedBox(height: Space.sm),
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: LtrText(
+                      j.caseNumber!,
+                      style: t.bodyLarge!.copyWith(color: Colors.white.withValues(alpha: 0.85), fontWeight: FontWeight.w500),
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: Space.xxl),
-              if (p != null)
-                Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: PriorityPill(p),
-                ),
-              const SizedBox(height: Space.lg),
-              if (j.complaint != null)
-                Text(
-                  j.complaint!,
-                  style: onDark.copyWith(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w600,
+                if (hasDetails) ...[
+                  const SizedBox(height: Space.xl),
+                  Container(
+                    padding: const EdgeInsets.all(Space.lg),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.22),
+                      borderRadius: BorderRadius.circular(Space.cardRadius),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (landmark != null) _AlertInfo(icon: LucideIcons.landmark, label: 'landmark'.tr, text: landmark),
+                        if (j.directions != null) ...[
+                          if (landmark != null) const SizedBox(height: Space.lg),
+                          _AlertInfo(icon: LucideIcons.signpost, label: 'directions_note'.tr, text: j.directions!),
+                        ],
+                        if (hospital != null) ...[
+                          if (landmark != null || j.directions != null) const SizedBox(height: Space.lg),
+                          _AlertInfo(icon: LucideIcons.hospital, label: 'destination'.tr, text: hospital),
+                        ],
+                      ],
+                    ),
                   ),
-                ),
-              if (j.landmark(lang) != null) ...[
-                const SizedBox(height: Space.sm),
-                Text(j.landmark(lang)!, style: onDark.copyWith(fontSize: 17)),
+                ],
+                const Spacer(),
+                _JobAlertAction(onConfirm: widget.onConfirm),
               ],
-              if (j.caseNumber != null) ...[
-                const SizedBox(height: Space.sm),
-                Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: LtrText(
-                    j.caseNumber!,
-                    style: onDark.copyWith(fontSize: 15),
-                  ),
-                ),
-              ],
-              if (j.confirmDeadlineAt != null) ...[
-                const SizedBox(height: Space.md),
-                JobConfirmDeadline(
-                  deadline: j.confirmDeadlineAt!,
-                  clockOffset: widget.clockOffset,
-                ),
-              ],
-              const Spacer(),
-              _JobAlertAction(onConfirm: widget.onConfirm),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+/// One detail line on the dark alert: icon, small label, readable value.
+class _AlertInfo extends StatelessWidget {
+  const _AlertInfo({required this.icon, required this.label, required this.text});
+  final IconData icon;
+  final String label;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      ExcludeSemantics(child: Icon(icon, color: Colors.white, size: 22)),
+      const SizedBox(width: Space.md),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13, fontWeight: FontWeight.w500)),
+            const SizedBox(height: 2),
+            Text(text, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600, height: 1.35)),
+          ],
+        ),
+      ),
+    ],
+  );
 }
 
 /// Confirmation is deliberately unavailable while the location provider is
@@ -263,23 +314,47 @@ class _JobConfirmDeadlineState extends State<JobConfirmDeadline> {
         '${(seconds ~/ 60).toString().padLeft(2, '0')}:'
         '${(seconds % 60).toString().padLeft(2, '0')}';
     final urgent = !expired && seconds < 60;
+    // Urgent flips to a white card with red text: it stands out on teal and on red alike.
+    final bg = urgent ? Colors.white : Colors.black.withValues(alpha: 0.28);
+    final fg = urgent ? AppColors.danger : Colors.white;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Space.sm, vertical: 4),
-      decoration: BoxDecoration(
-        color: urgent ? Colors.red.shade700 : Colors.black38,
-        borderRadius: BorderRadius.circular(Space.sm),
-      ),
-      child: Text(
-        expired
-            ? 'confirm_deadline_expired'.tr
-            : 'confirm_deadline'.trParams({'t': time}),
-        style: TextStyle(
-          color: expired ? Colors.white70 : Colors.white,
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          fontFeatures: const [FontFeature.tabularFigures()],
-        ),
+    return Semantics(
+      container: true,
+      label: expired ? 'confirm_deadline_expired'.tr : 'confirm_deadline'.trParams({'t': time}),
+      excludeSemantics: true,
+      child: AnimatedContainer(
+        duration: Motion.colour,
+        padding: const EdgeInsets.symmetric(horizontal: Space.xl, vertical: Space.lg),
+        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(Space.cardRadius)),
+        child: expired
+            ? Row(
+                children: [
+                  Icon(LucideIcons.timerOff, color: fg, size: 24),
+                  const SizedBox(width: Space.md),
+                  Expanded(
+                    child: Text('confirm_deadline_expired'.tr, style: TextStyle(color: fg, fontSize: 16, fontWeight: FontWeight.w600)),
+                  ),
+                ],
+              )
+            : Row(
+                children: [
+                  Icon(LucideIcons.timer, color: fg, size: 28),
+                  const SizedBox(width: Space.md),
+                  Expanded(
+                    child: Text('confirm_deadline_label'.tr, style: TextStyle(color: fg, fontSize: 16, fontWeight: FontWeight.w600)),
+                  ),
+                  LtrText(
+                    time,
+                    style: TextStyle(
+                      color: fg,
+                      fontSize: 40,
+                      height: 1,
+                      fontWeight: FontWeight.w700,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }
@@ -470,18 +545,89 @@ IconData alertIcon(AlertType t) => switch (t) {
   AlertType.other => LucideIcons.circleAlert,
 };
 
-/// One large tile per pre-arrival alert type (icon + word), each with a confirm.
-class AlertGrid extends StatelessWidget {
+/// Label of a next-step button. Ending at the scene is "End without transport", not "Job completed".
+String stepLabel(JobStatus from, JobStatus next) =>
+    from == JobStatus.onScene && next == JobStatus.completed
+    ? 'end_without_transport'.tr
+    : 'step_${next.wire}'.tr;
+
+/// "Hand over the patient" card, shown from `leaving_scene` to the end of the job. Whoever must
+/// send the handover gets the button; the driver with a paramedic on the shift sees where the
+/// paramedic's handover stands (from the server).
+class HandoverCard extends StatelessWidget {
+  const HandoverCard({
+    required this.canHandOver,
+    required this.missing,
+    required this.onOpen,
+    this.handovers = const [],
+    super.key,
+  });
+  final bool canHandOver;
+  final bool missing;
+  final VoidCallback onOpen;
+  final List<JobHandover> handovers;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!canHandOver) {
+      final sent = handovers.isNotEmpty;
+      final received = sent && handovers.every((h) => h.received);
+      final (text, color, surface, icon) = !sent
+          ? ('handover_wait_paramedic'.tr, AppColors.warning, AppColors.warningSurface, LucideIcons.clock)
+          : received
+          ? ('handover_received'.tr, AppColors.brand, AppColors.brandSoft, LucideIcons.circleCheck)
+          : ('handover_sent_by_paramedic'.tr, AppColors.brand, AppColors.brandSoft, LucideIcons.circleCheck);
+      return Container(
+        key: Key(sent ? 'handover_sent_hint' : 'handover_wait_hint'),
+        padding: const EdgeInsets.all(Space.md),
+        decoration: BoxDecoration(
+          color: surface,
+          borderRadius: BorderRadius.circular(Space.cardRadius),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(width: Space.sm),
+            Expanded(
+              child: Text(text, style: TextStyle(color: color, fontWeight: FontWeight.w500)),
+            ),
+          ],
+        ),
+      );
+    }
+    return AppButton(
+      key: const Key('open_handover'),
+      label: 'handover_card'.tr,
+      icon: LucideIcons.clipboardCheck,
+      variant: missing ? ButtonVariant.primary : ButtonVariant.secondary,
+      height: 56,
+      onPressed: onOpen,
+    );
+  }
+}
+
+/// One large tile per pre-arrival alert type. Pick one or more, then send them together.
+class AlertGrid extends StatefulWidget {
   const AlertGrid({required this.onAlert, super.key});
   final Future<void> Function(AlertType type) onAlert;
 
-  Future<void> _confirm(AlertType t) async {
+  @override
+  State<AlertGrid> createState() => _AlertGridState();
+}
+
+class _AlertGridState extends State<AlertGrid> {
+  final _picked = <AlertType>{};
+  bool _busy = false;
+
+  Future<void> _submit() async {
+    final types = AlertType.values.where(_picked.contains).toList();
+    if (types.isEmpty) return;
     final ok = await Get.dialog<bool>(
       AlertDialog(
-        icon: IconTile(alertIcon(t), tone: Tone.danger),
+        icon: IconTile(alertIcon(types.first), tone: Tone.danger),
         title: Text('alert_confirm_title'.tr),
         content: Text(
-          'alert_confirm_body'.trParams({'type': 'alert_${t.wire}'.tr}),
+          'alert_confirm_body'.trParams({'type': types.map((t) => 'alert_${t.wire}'.tr).join('، ')}),
         ),
         actions: [
           TextButton(
@@ -496,65 +642,81 @@ class AlertGrid extends StatelessWidget {
         ],
       ),
     );
-    if (ok ?? false) {
-      await onAlert(t);
+    if (!(ok ?? false)) return;
+    setState(() => _busy = true);
+    try {
+      // The API takes one type per alert, so each picked type is its own queued request.
+      for (final t in types) {
+        await widget.onAlert(t);
+      }
       showToast('alert_queued'.tr);
+      if (mounted) setState(_picked.clear);
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
   @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, c) {
-      final w = (c.maxWidth - Space.sm) / 2;
-      return Wrap(
-        spacing: Space.sm,
-        runSpacing: Space.sm,
-        children: [
-          for (final t in AlertType.values)
-            SizedBox(
-              width: w,
-              child: Material(
-                color: AppColors.surface,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(Space.cardRadius),
-                  side: const BorderSide(color: AppColors.line),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Semantics(
-                  button: true,
-                  child: InkWell(
-                    key: Key('alert_${t.wire}'),
-                    onTap: () => _confirm(t),
-                    child: Padding(
-                      padding: const EdgeInsets.all(Space.md),
-                      child: Row(
-                        children: [
-                          IconTile(
-                            alertIcon(t),
-                            size: 36,
-                            iconSize: 18,
-                            tone: Tone.danger,
-                          ),
-                          const SizedBox(width: Space.md),
-                          Expanded(
-                            child: Text(
-                              'alert_${t.wire}'.tr,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.ink,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      LayoutBuilder(
+        builder: (context, c) {
+          final w = (c.maxWidth - Space.sm) / 2;
+          return Wrap(
+            spacing: Space.sm,
+            runSpacing: Space.sm,
+            children: [for (final t in AlertType.values) SizedBox(width: w, child: _tile(t))],
+          );
+        },
+      ),
+      const SizedBox(height: Space.md),
+      AppButton(
+        key: const Key('alert_submit'),
+        label: _picked.isEmpty
+            ? 'alert_pick'.tr
+            : 'alert_send_n'.trParams({'n': '${_picked.length}'}),
+        icon: LucideIcons.send,
+        variant: ButtonVariant.danger,
+        busy: _busy,
+        onPressed: _picked.isEmpty ? null : () => unawaited(_submit()),
+      ),
+    ],
+  );
+
+  Widget _tile(AlertType t) {
+    final on = _picked.contains(t);
+    return Material(
+      color: on ? AppColors.dangerSurface : AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Space.cardRadius),
+        side: BorderSide(color: on ? AppColors.danger : AppColors.line, width: on ? 2 : 1),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Semantics(
+        button: true,
+        selected: on,
+        child: InkWell(
+          key: Key('alert_${t.wire}'),
+          onTap: () => setState(() => on ? _picked.remove(t) : _picked.add(t)),
+          child: Padding(
+            padding: const EdgeInsets.all(Space.md),
+            child: Row(
+              children: [
+                IconTile(alertIcon(t), size: 36, iconSize: 18, tone: Tone.danger),
+                const SizedBox(width: Space.md),
+                Expanded(
+                  child: Text(
+                    'alert_${t.wire}'.tr,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.ink),
                   ),
                 ),
-              ),
+                Icon(on ? LucideIcons.squareCheck : LucideIcons.square, size: 20, color: on ? AppColors.danger : AppColors.inkMuted),
+              ],
             ),
-        ],
-      );
-    },
-  );
+          ),
+        ),
+      ),
+    );
+  }
 }

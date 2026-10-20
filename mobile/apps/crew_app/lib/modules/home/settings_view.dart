@@ -74,7 +74,7 @@ class CrewSettingsView extends StatelessWidget {
                 ListRow(
                   icon: LucideIcons.refreshCw,
                   title: 'send_now'.tr,
-                  onTap: outbox.nudge,
+                  onTap: () => unawaited(_sendNow(outbox)),
                   showChevron: false,
                 ),
               ],
@@ -166,6 +166,16 @@ class CrewSettingsView extends StatelessWidget {
         await Get.offAllNamed<void>(CrewRoutes.home);
       }
     }
+  }
+
+  Future<void> _sendNow(OutboxService outbox) async {
+    if (outbox.items.isEmpty) {
+      showToast('send_nothing'.tr);
+      return;
+    }
+    showToast('send_sending'.tr);
+    await outbox.flush();
+    showToast(outbox.items.isEmpty ? 'send_done'.tr : 'send_failed'.tr);
   }
 
   /// Signing out wipes the queue, so unsent changes are lost: say so first.

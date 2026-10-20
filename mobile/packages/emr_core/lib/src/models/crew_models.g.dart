@@ -41,7 +41,7 @@ Map<String, dynamic> _$ShiftToJson(Shift instance) => <String, dynamic>{
   'hospitalNameAr': instance.hospitalNameAr,
   'hospitalNameEn': instance.hospitalNameEn,
   'startedAt': instance.startedAt?.toIso8601String(),
-  'crew': instance.crew.map((e) => e.toJson()).toList(),
+  'crew': instance.crew,
 };
 
 ShiftCrewMember _$ShiftCrewMemberFromJson(Map<String, dynamic> json) =>
@@ -73,6 +73,9 @@ CurrentShift _$CurrentShiftFromJson(Map<String, dynamic> json) => CurrentShift(
       ? null
       : Shift.fromJson(json['shift'] as Map<String, dynamic>),
 );
+
+Map<String, dynamic> _$CurrentShiftToJson(CurrentShift instance) =>
+    <String, dynamic>{'shift': instance.shift};
 
 Job _$JobFromJson(Map<String, dynamic> json) => Job(
   dispatchId: json['dispatchId'] as String?,
@@ -108,6 +111,11 @@ Job _$JobFromJson(Map<String, dynamic> json) => Job(
   serverTime: json['serverTime'] == null
       ? null
       : DateTime.parse(json['serverTime'] as String),
+  handovers:
+      (json['handovers'] as List<dynamic>?)
+          ?.map((e) => JobHandover.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      [],
 );
 
 Map<String, dynamic> _$JobToJson(Job instance) => <String, dynamic>{
@@ -132,11 +140,14 @@ Map<String, dynamic> _$JobToJson(Job instance) => <String, dynamic>{
   'confirmedAt': instance.confirmedAt?.toIso8601String(),
   'statusTime': instance.statusTime?.toIso8601String(),
   'serverTime': instance.serverTime?.toIso8601String(),
+  'handovers': instance.handovers.map((e) => e.toJson()).toList(),
 };
 
 Map<String, dynamic> _$StatusBodyToJson(StatusBody instance) =>
     <String, dynamic>{
       'status': instance.status,
+      'noTransportReason': ?instance.noTransportReason,
+      'note': ?instance.note,
       'statusTime': instance.statusTime,
     };
 
@@ -269,4 +280,86 @@ Map<String, dynamic> _$TreatmentBodyToJson(TreatmentBody instance) =>
       'route': ?instance.route,
       'note': ?instance.note,
       'correctsId': ?instance.correctsId,
+    };
+
+Map<String, dynamic> _$HandoverBodyToJson(HandoverBody instance) =>
+    <String, dynamic>{
+      'caseId': instance.caseId,
+      'dispatchId': instance.dispatchId,
+      'patientId': instance.patientId,
+      'summary': instance.summary,
+    };
+
+Medicine _$MedicineFromJson(Map<String, dynamic> json) => Medicine(
+  code: json['code'] as String,
+  nameAr: json['nameAr'] as String?,
+  nameEn: json['nameEn'] as String?,
+);
+
+Map<String, dynamic> _$MedicineToJson(Medicine instance) => <String, dynamic>{
+  'code': instance.code,
+  'nameAr': instance.nameAr,
+  'nameEn': instance.nameEn,
+};
+
+JobHandover _$JobHandoverFromJson(Map<String, dynamic> json) => JobHandover(
+  id: json['id'] as String?,
+  patientId: json['patientId'] as String?,
+  fullNameAr: json['fullNameAr'] as String?,
+  fullNameEn: json['fullNameEn'] as String?,
+  temporaryLabel: json['temporaryLabel'] as String?,
+  status: json['status'] as String?,
+  handedAt: json['handedAt'] == null
+      ? null
+      : DateTime.parse(json['handedAt'] as String),
+  receivedAt: json['receivedAt'] == null
+      ? null
+      : DateTime.parse(json['receivedAt'] as String),
+);
+
+Map<String, dynamic> _$JobHandoverToJson(JobHandover instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'patientId': instance.patientId,
+      'fullNameAr': instance.fullNameAr,
+      'fullNameEn': instance.fullNameEn,
+      'temporaryLabel': instance.temporaryLabel,
+      'status': instance.status,
+      'handedAt': instance.handedAt?.toIso8601String(),
+      'receivedAt': instance.receivedAt?.toIso8601String(),
+    };
+
+CrewPastJob _$CrewPastJobFromJson(Map<String, dynamic> json) => CrewPastJob(
+  dispatchId: json['dispatchId'] as String,
+  caseId: json['caseId'] as String?,
+  caseNumber: json['caseNumber'] as String?,
+  priority: json['priority'] as String?,
+  complaint: json['complaint'] as String?,
+  status: json['status'] as String?,
+  sentAt: json['sentAt'] == null
+      ? null
+      : DateTime.parse(json['sentAt'] as String),
+  completedAt: json['completedAt'] == null
+      ? null
+      : DateTime.parse(json['completedAt'] as String),
+  closingReason: json['closingReason'] as String?,
+  hospitalAr: json['hospitalAr'] as String?,
+  hospitalEn: json['hospitalEn'] as String?,
+  plateNumber: json['plateNumber'] as String?,
+);
+
+Map<String, dynamic> _$CrewPastJobToJson(CrewPastJob instance) =>
+    <String, dynamic>{
+      'dispatchId': instance.dispatchId,
+      'caseId': instance.caseId,
+      'caseNumber': instance.caseNumber,
+      'priority': instance.priority,
+      'complaint': instance.complaint,
+      'status': instance.status,
+      'sentAt': instance.sentAt?.toIso8601String(),
+      'completedAt': instance.completedAt?.toIso8601String(),
+      'closingReason': instance.closingReason,
+      'hospitalAr': instance.hospitalAr,
+      'hospitalEn': instance.hospitalEn,
+      'plateNumber': instance.plateNumber,
     };

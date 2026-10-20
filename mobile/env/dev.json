@@ -1,6 +1,6 @@
 {
-  "API": "http://10.0.2.2:8080",
-  "WS": "ws://10.0.2.2:8080/ws",
+  "API": "http://localhost:8080/",
+  "WS": "ws://localhost:8080/ws",
   "DEV_TOOLS": "true",
-  "TILES": "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+  "TILES": "http://localhost:8081/styles/basic-preview/512/{z}/{x}/{y}.png"
 }

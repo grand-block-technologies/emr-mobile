@@ -257,7 +257,7 @@ void main() {
         gps: GpsService(source: FakeLocation(), outbox: outbox),
       );
       crew.job.value = Job.fromJson(jobWith('on_scene'));
-      c = PatientController(repo: repo, crew: crew, now: () => now);
+      c = PatientController(repo: repo, crew: crew, outbox: outbox, now: () => now);
       await c.load();
     });
 

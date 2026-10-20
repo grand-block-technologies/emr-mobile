@@ -27,6 +27,12 @@ class FakeAdapter implements HttpClientAdapter {
   /// Queue replies for a route; the last one repeats once the queue is drained.
   void on(String route, FakeHandler handler) => (_routes[route] ??= []).add(handler);
   void reply(String route, int status, [Object? body]) => on(route, (_, _) => FakeReply(status, body));
+  /// Replaces whatever is queued for [route] (the server state changed).
+  void set(String route, int status, [Object? body]) {
+    _routes.remove(route);
+    reply(route, status, body);
+  }
+
   void offline(String route) => on(route, (_, _) => const FakeReply.offline());
 
   List<RequestOptions> calls(String route) =>

@@ -475,6 +475,65 @@ class _CrewApi implements CrewApi {
     return _value;
   }
 
+  @override
+  Future<ApiPage<CrewPastJob>> pastJobs(int page, int size) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{r'page': page, r'size': size};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<ApiPage<CrewPastJob>>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/api/v1/crew/jobs',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late ApiPage<CrewPastJob> _value;
+    try {
+      _value = ApiPage<CrewPastJob>.fromJson(
+        _result.data!,
+        (json) => CrewPastJob.fromJson(json as Map<String, dynamic>),
+      );
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, response: _result);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<List<Medicine>> medicines() async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<List<Medicine>>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/api/v1/medicines',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<List<dynamic>>(_options);
+    late List<Medicine> _value;
+    try {
+      _value = _result.data!
+          .map((dynamic i) => Medicine.fromJson(i as Map<String, dynamic>))
+          .toList();
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, response: _result);
+      rethrow;
+    }
+    return _value;
+  }
+
   RequestOptions _setStreamType<T>(RequestOptions requestOptions) {
     if (T != dynamic &&
         !(requestOptions.responseType == ResponseType.bytes ||
@@ -713,7 +772,7 @@ class _CitizenApi implements CitizenApi {
   }
 
   @override
-  Future<ApiPage<HistoryRow>> history(
+  Future<CitizenHistory> history(
     int page,
     int size, {
     String? patientId,
@@ -727,7 +786,7 @@ class _CitizenApi implements CitizenApi {
     queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<ApiPage<HistoryRow>>(
+    final _options = _setStreamType<CitizenHistory>(
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
@@ -738,12 +797,9 @@ class _CitizenApi implements CitizenApi {
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late ApiPage<HistoryRow> _value;
+    late CitizenHistory _value;
     try {
-      _value = ApiPage<HistoryRow>.fromJson(
-        _result.data!,
-        (json) => HistoryRow.fromJson(json as Map<String, dynamic>),
-      );
+      _value = CitizenHistory.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;

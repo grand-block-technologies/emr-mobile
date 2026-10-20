@@ -48,6 +48,8 @@ class AppTranslations extends Translations {
 
     // Sync banner
     'sync_online_all_sent': 'متصل · تم إرسال كل شيء',
+    'sync_not_sent': 'لم يُرسل: @n',
+    'delete': 'حذف',
     'sync_offline_waiting': 'غير متصل · @n في الانتظار',
     'sync_offline': 'غير متصل',
     'sync_online_pending': 'متصل · @n بانتظار الإرسال',
@@ -87,7 +89,7 @@ class AppTranslations extends Translations {
     'old_password': 'كلمة المرور الحالية',
     'new_password': 'كلمة المرور الجديدة',
     'repeat_password': 'أعد كتابة كلمة المرور الجديدة',
-    'password_rule': 'من 8 إلى 72 حرفًا، وفيها حرف ورقم على الأقل.',
+    'password_rule': '12 حرفًا على الأقل (حتى 72)، وفيها حرف ورقم، ولا تحتوي اسم المستخدم.',
     'password_changed': 'تم تغيير كلمة المرور',
     'forgot_title': 'استعادة كلمة المرور',
     'forgot_body': 'أدخل اسم المستخدم، وسنرسل رمزًا إلى هاتفك المسجّل.',
@@ -102,7 +104,9 @@ class AppTranslations extends Translations {
 
     // Validation
     'v_required': 'هذا الحقل مطلوب.',
-    'v_password_length': 'يجب أن تكون كلمة المرور من 8 إلى 72 حرفًا.',
+    'v_arabic_name': 'اكتب الاسم بالحروف العربية.',
+    'v_password_length': 'يجب أن تكون كلمة المرور من 12 إلى 72 حرفًا.',
+    'v_password_username': 'يجب ألا تحتوي كلمة المرور على اسم المستخدم.',
     'v_password_mix': 'يجب أن تحتوي كلمة المرور على حرف ورقم على الأقل.',
     'v_password_match': 'كلمتا المرور غير متطابقتين.',
     'v_sms_code': 'أدخل الرمز المكوّن من 6 أرقام.',
@@ -147,6 +151,8 @@ class AppTranslations extends Translations {
     'call_999': 'Call @n',
 
     'sync_online_all_sent': 'Online · all sent',
+    'sync_not_sent': 'Not sent: @n',
+    'delete': 'Delete',
     'sync_offline_waiting': 'Offline · @n waiting',
     'sync_offline': 'Offline',
     'sync_online_pending': 'Online · @n waiting to send',
@@ -184,7 +190,7 @@ class AppTranslations extends Translations {
     'old_password': 'Current password',
     'new_password': 'New password',
     'repeat_password': 'Repeat the new password',
-    'password_rule': '8 to 72 characters, with at least one letter and one digit.',
+    'password_rule': 'At least 12 characters (up to 72), with a letter and a digit, not containing the username.',
     'password_changed': 'Password changed',
     'forgot_title': 'Reset password',
     'forgot_body': 'Enter your username and we will send a code to your registered phone.',
@@ -198,7 +204,9 @@ class AppTranslations extends Translations {
     'wrong_app': 'Use the app assigned to your role.',
 
     'v_required': 'This field is required.',
-    'v_password_length': 'The password must be 8 to 72 characters.',
+    'v_arabic_name': 'Write the name in Arabic letters.',
+    'v_password_length': 'The password must be 12 to 72 characters.',
+    'v_password_username': 'The password must not contain the username.',
     'v_password_mix': 'The password needs at least one letter and one digit.',
     'v_password_match': 'The passwords do not match.',
     'v_sms_code': 'Enter the 6-digit code.',

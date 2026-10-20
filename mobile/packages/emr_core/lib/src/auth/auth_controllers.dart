@@ -254,7 +254,7 @@ class ChangePasswordController extends GetxController with FormStatus {
     clearErrors();
     final ok = applyLocal({
       'oldPassword': Validators.required(oldPassword),
-      'newPassword': Validators.password(newPassword),
+      'newPassword': Validators.password(newPassword, username: _session.me.value?.username),
       'repeat': newPassword == repeat ? null : 'v_password_match',
     });
     if (!ok) return;
@@ -313,7 +313,7 @@ class ForgotPasswordController extends GetxController with FormStatus {
     clearErrors();
     final ok = applyLocal({
       'code': Validators.smsCode(code.trim()),
-      'newPassword': Validators.password(newPassword),
+      'newPassword': Validators.password(newPassword, username: username),
       'repeat': newPassword == repeat ? null : 'v_password_match',
     });
     if (!ok) return;

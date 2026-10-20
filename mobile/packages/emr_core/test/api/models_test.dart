@@ -349,6 +349,88 @@ void main() {
       expect((await api.crew.job()).hasJob, isFalse);
     });
   });
+  group('field-test models', () {
+    test('StatusBody sends the no-transport reason and note only when set', () {
+      expect(const StatusBody(status: 'en_route', statusTime: 't').toJson(), {
+        'status': 'en_route',
+        'statusTime': 't',
+      });
+      expect(
+        const StatusBody(
+          status: 'completed',
+          statusTime: 't',
+          noTransportReason: 'refused',
+          note: 'n',
+        ).toJson(),
+        {
+          'status': 'completed',
+          'statusTime': 't',
+          'noTransportReason': 'refused',
+          'note': 'n',
+        },
+      );
+    });
+
+    test('the six no-transport reasons use the backend codes', () {
+      expect(NoTransportReason.values.map((r) => r.wire), [
+        'treated_at_scene',
+        'refused',
+        'died_at_scene',
+        'patient_not_found',
+        'cancelled_by_caller',
+        'false_alarm',
+      ]);
+      expect(NoTransportReason.refused.noteRequired, isTrue);
+      expect(NoTransportReason.falseAlarm.noteRequired, isFalse);
+    });
+
+    test('HandoverBody and Medicine', () {
+      expect(
+        const HandoverBody(
+          caseId: 'c',
+          dispatchId: 'd',
+          patientId: 'p',
+          summary: 's',
+        ).toJson(),
+        {'caseId': 'c', 'dispatchId': 'd', 'patientId': 'p', 'summary': 's'},
+      );
+      final m = Medicine.fromJson({
+        'code': 'ASPIRIN',
+        'nameAr': 'أسبرين',
+        'nameEn': 'Aspirin',
+      });
+      expect(m.name('en'), 'Aspirin');
+      expect(m.name('ar'), 'أسبرين');
+    });
+
+    test('oxygen or a diastolic alone is not a measurement', () {
+      const base = ObservationBody(observedAt: 't');
+      expect(base.hasAnyValue, isFalse);
+      expect(
+        const ObservationBody(observedAt: 't', onOxygen: true).hasAnyValue,
+        isFalse,
+      );
+      expect(
+        const ObservationBody(observedAt: 't', diastolic: 80).hasAnyValue,
+        isFalse,
+      );
+      expect(
+        const ObservationBody(observedAt: 't', spo2: 95).hasAnyValue,
+        isTrue,
+      );
+    });
+
+    test('Me.features gates the pre-arrival alerts', () {
+      final off = Me.fromJson({'id': '1', 'username': 'u'});
+      expect(off.alertsEnabled, isFalse);
+      final on = Me.fromJson({
+        'id': '1',
+        'username': 'u',
+        'features': ['feature.crew_alerts'],
+      });
+      expect(on.alertsEnabled, isTrue);
+    });
+  });
 }
 
 class _NoTokens implements AuthTokenSource {

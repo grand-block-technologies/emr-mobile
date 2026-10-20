@@ -34,8 +34,13 @@ abstract final class SudanTime {
 
   /// `15 Oct 2026 · 14:05` / `15 أكتوبر 2026 · 14:05`. Digits are always Latin so dates read the
   /// same as clocks and case numbers (the Arabic locale would otherwise use Arabic-Indic digits).
-  static String dateTime(DateTime t, String lang) =>
-      '${latinDigits(DateFormat('d MMM yyyy', lang == 'ar' ? 'ar' : 'en').format(local(t)))} · ${clock(t)}';
+  ///
+  /// In Arabic the whole string is one right-to-left isolate, so it reads `20 أكتوبر 2026 · 14:52`
+  /// even when the surrounding widget forces left-to-right (case numbers and clocks do that).
+  static String dateTime(DateTime t, String lang) {
+    final text = '${latinDigits(DateFormat('d MMM yyyy', lang == 'ar' ? 'ar' : 'en').format(local(t)))} · ${clock(t)}';
+    return lang == 'ar' ? '\u2067$text\u2069' : text;
+  }
 
   /// Clock only when [t] is today in Sudan, otherwise date and clock.
   static String when(DateTime t, DateTime now, String lang) {

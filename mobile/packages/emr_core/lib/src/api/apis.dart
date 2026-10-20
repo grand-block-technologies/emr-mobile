@@ -79,6 +79,15 @@ abstract class CrewApi {
 
   @GET('/api/v1/crew/job')
   Future<Job> job();
+
+  @GET('/api/v1/crew/jobs')
+  Future<ApiPage<CrewPastJob>> pastJobs(
+    @Query('page') int page,
+    @Query('size') int size,
+  );
+
+  @GET('/api/v1/medicines')
+  Future<List<Medicine>> medicines();
 }
 
 @RestApi()
@@ -115,7 +124,7 @@ abstract class CitizenApi {
   Future<DependantLink> addDependant(@Body() DependantBody body);
 
   @GET('/api/v1/citizen/history')
-  Future<ApiPage<HistoryRow>> history(
+  Future<CitizenHistory> history(
     @Query('page') int page,
     @Query('size') int size, {
     @Query('patientId') String? patientId,
@@ -132,6 +141,7 @@ abstract final class CrewPaths {
       '/api/v1/dispatches/$dispatchId/alerts';
   static const gps = '/api/v1/crew/gps';
   static const patients = '/api/v1/patients';
+  static const handovers = '/api/v1/handovers';
   static String observations(String patientId) =>
       '/api/v1/patients/$patientId/observations';
   static String treatments(String patientId) =>

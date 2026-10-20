@@ -37,7 +37,7 @@ class CitizenRepository {
   /// The newest open request, if any (used when the server says there are too many open).
   Future<RequestRow?> latestOpen() async => (await requests(size: 10)).content.where((r) => r.isOpen).firstOrNull;
 
-  Future<ApiPage<HistoryRow>> history({int page = 0, int size = 10, String? patientId}) =>
+  Future<CitizenHistory> history({int page = 0, int size = 10, String? patientId}) =>
       _api.citizen.history(page, size, patientId: patientId);
 
   /// There is no list endpoint for family links yet, so the links made from this phone are kept.

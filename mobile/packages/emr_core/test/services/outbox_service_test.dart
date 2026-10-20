@@ -16,7 +16,11 @@ void main() {
   late List<OutboxDone> done;
 
   OutboxService build() {
-    final o = OutboxService(store: store, dio: () => dio, backoff: const [Duration(seconds: 5)]);
+    final o = OutboxService(
+      store: store,
+      dio: () => dio,
+      backoff: const [Duration(seconds: 5)],
+    );
     o.failures.listen(failures.add);
     o.completed.listen(done.add);
     return o;
@@ -24,7 +28,9 @@ void main() {
 
   setUp(() {
     http = FakeAdapter();
-    dio = Dio(BaseOptions(baseUrl: 'http://test', contentType: Headers.jsonContentType))..httpClientAdapter = http;
+    dio = Dio(
+      BaseOptions(baseUrl: 'http://test', contentType: Headers.jsonContentType),
+    )..httpClientAdapter = http;
     store = MemoryKeyValueStore();
     failures = [];
     done = [];
@@ -36,70 +42,109 @@ void main() {
     await pumpEventQueue();
   }
 
-  test('sends items in order with their idempotency key, then empties', () async {
-    http.reply('POST /a', 200, {'ok': 1});
-    http.reply('POST /b', 200, {'ok': 2});
+  test(
+    'sends items in order with their idempotency key, then empties',
+    () async {
+      http.reply('POST /a', 200, {'ok': 1});
+      http.reply('POST /b', 200, {'ok': 2});
 
-    final a = await outbox.add(OutboxKind.status, '/a', {'n': 1});
-    final b = await outbox.add(OutboxKind.status, '/b', {'n': 2});
-    await settle();
+      final a = await outbox.add(OutboxKind.status, '/a', {'n': 1});
+      final b = await outbox.add(OutboxKind.status, '/b', {'n': 2});
+      await settle();
 
-    expect(http.requests.map((r) => r.path), ['/a', '/b']);
-    expect(http.requests[0].headers['Idempotency-Key'], a.key);
-    expect(http.requests[1].headers['Idempotency-Key'], b.key);
-    expect(outbox.items, isEmpty);
-    expect(await store.keys(), ['meta:seq']);
-    expect(done.map((d) => d.item.path), ['/a', '/b']);
-    expect(outbox.sync.value.allSent, isTrue);
-  });
+      expect(http.requests.map((r) => r.path), ['/a', '/b']);
+      expect(http.requests[0].headers['Idempotency-Key'], a.key);
+      expect(http.requests[1].headers['Idempotency-Key'], b.key);
+      expect(outbox.items, isEmpty);
+      expect(await store.keys(), ['meta:seq']);
+      expect(done.map((d) => d.item.path), ['/a', '/b']);
+      expect(outbox.sync.value.allSent, isTrue);
+    },
+  );
 
-  test('offline: nothing is lost, order is kept and the same key and body are resent', () async {
-    http.offline('POST /a');
-    http.reply('POST /a', 200, {});
-    http.reply('POST /b', 200, {});
-
-    final a = await outbox.add(OutboxKind.status, '/a', {'status': 'en_route'});
-    await outbox.add(OutboxKind.status, '/b', {'status': 'on_scene'});
-    await settle();
-
-    expect(outbox.items, hasLength(2), reason: 'both still queued after the offline attempt');
-    expect(outbox.sync.value.blocked, isTrue);
-    expect(http.calls('POST /b'), isEmpty, reason: '/b must wait for /a');
-
-    outbox.nudge();
-    await settle();
-
-    final sentA = http.calls('POST /a');
-    expect(sentA.map((r) => r.headers['Idempotency-Key']).toSet(), {a.key});
-    final bodiesA = [for (var i = 0; i < http.requests.length; i++) if (http.requests[i].path == '/a') http.bodies[i]];
-    expect(bodiesA, [
-      {'status': 'en_route'},
-      {'status': 'en_route'},
-    ]);
-    expect(http.requests.last.path, '/b');
-    expect(outbox.items, isEmpty);
-    expect(failures, isEmpty);
-  });
-
-  test('5xx and 429 keep the item for later; 4xx drops it and reports it', () async {
+  test('a handover is sent even when an earlier item is stuck, others still wait', () async {
     http.reply('POST /busy', 503, errorBody('DATABASE_UNAVAILABLE'));
-    await outbox.add(OutboxKind.status, '/busy', {});
-    await settle();
-    expect(outbox.items, hasLength(1));
-    expect(failures, isEmpty);
+    http.reply('POST /busy', 200, {});
+    http.reply('POST /status', 200, {});
+    http.reply('POST /handover', 200, {});
 
-    await outbox.clear();
-    http.reply('POST /bad', 400, errorBody('STATUS_TIME_INVALID'));
-    http.reply('POST /next', 200, {});
-    await outbox.add(OutboxKind.status, '/bad', {});
-    await outbox.add(OutboxKind.status, '/next', {});
+    await outbox.add(OutboxKind.observation, '/busy', {'n': 1});
+    await outbox.add(OutboxKind.status, '/status', {'n': 2});
+    await outbox.add(OutboxKind.handover, '/handover', {'n': 3});
     await settle();
 
-    expect(failures.single.error.code, 'STATUS_TIME_INVALID');
-    expect(failures.single.item.path, '/bad');
-    expect(http.calls('POST /next'), hasLength(1), reason: 'a refused item must not block the queue');
-    expect(outbox.items, isEmpty);
+    expect(http.calls('POST /handover'), hasLength(1));
+    expect(http.calls('POST /status'), isEmpty, reason: 'non-handover items keep their order');
+    expect(outbox.items.map((i) => i.path), ['/busy', '/status']);
+    expect(outbox.sync.value.blocked, isTrue);
   });
+
+  test(
+    'offline: nothing is lost, order is kept and the same key and body are resent',
+    () async {
+      http.offline('POST /a');
+      http.reply('POST /a', 200, {});
+      http.reply('POST /b', 200, {});
+
+      final a = await outbox.add(OutboxKind.status, '/a', {
+        'status': 'en_route',
+      });
+      await outbox.add(OutboxKind.status, '/b', {'status': 'on_scene'});
+      await settle();
+
+      expect(
+        outbox.items,
+        hasLength(2),
+        reason: 'both still queued after the offline attempt',
+      );
+      expect(outbox.sync.value.blocked, isTrue);
+      expect(http.calls('POST /b'), isEmpty, reason: '/b must wait for /a');
+
+      outbox.nudge();
+      await settle();
+
+      final sentA = http.calls('POST /a');
+      expect(sentA.map((r) => r.headers['Idempotency-Key']).toSet(), {a.key});
+      final bodiesA = [
+        for (var i = 0; i < http.requests.length; i++)
+          if (http.requests[i].path == '/a') http.bodies[i],
+      ];
+      expect(bodiesA, [
+        {'status': 'en_route'},
+        {'status': 'en_route'},
+      ]);
+      expect(http.requests.last.path, '/b');
+      expect(outbox.items, isEmpty);
+      expect(failures, isEmpty);
+    },
+  );
+
+  test(
+    '5xx and 429 keep the item for later; 4xx drops it and reports it',
+    () async {
+      http.reply('POST /busy', 503, errorBody('DATABASE_UNAVAILABLE'));
+      await outbox.add(OutboxKind.status, '/busy', {});
+      await settle();
+      expect(outbox.items, hasLength(1));
+      expect(failures, isEmpty);
+
+      await outbox.clear();
+      http.reply('POST /bad', 400, errorBody('STATUS_TIME_INVALID'));
+      http.reply('POST /next', 200, {});
+      await outbox.add(OutboxKind.status, '/bad', {});
+      await outbox.add(OutboxKind.status, '/next', {});
+      await settle();
+
+      expect(failures.single.error.code, 'STATUS_TIME_INVALID');
+      expect(failures.single.item.path, '/bad');
+      expect(
+        http.calls('POST /next'),
+        hasLength(1),
+        reason: 'a refused item must not block the queue',
+      );
+      expect(outbox.items, isEmpty);
+    },
+  );
 
   test('401 that survives the refresh is retried later, not dropped', () async {
     http.reply('POST /a', 401, errorBody('UNAUTHORIZED'));
@@ -109,58 +154,94 @@ void main() {
     expect(failures, isEmpty);
   });
 
-  test('the queue survives an app restart in order and keeps numbering', () async {
-    http.fallback = (_, _) => const FakeReply.offline();
-    await outbox.add(OutboxKind.status, '/one', {'i': 1});
-    await outbox.add(OutboxKind.alert, '/two', {'i': 2});
-    await settle();
+  test(
+    'the queue survives an app restart in order and keeps numbering',
+    () async {
+      http.fallback = (_, _) => const FakeReply.offline();
+      await outbox.add(OutboxKind.status, '/one', {'i': 1});
+      await outbox.add(OutboxKind.alert, '/two', {'i': 2});
+      await settle();
 
-    final restarted = build();
-    await restarted.load();
-    expect(restarted.items.map((i) => i.path), ['/one', '/two']);
-    expect(restarted.items.first.kind, OutboxKind.status);
+      final restarted = build();
+      await restarted.load();
+      expect(restarted.items.map((i) => i.path), ['/one', '/two']);
+      expect(restarted.items.first.kind, OutboxKind.status);
 
-    final third = await restarted.add(OutboxKind.status, '/three', {});
-    expect(third.seq, 3);
-    expect(third.key, isNot(restarted.items.first.key));
-  });
+      final third = await restarted.add(OutboxKind.status, '/three', {});
+      expect(third.seq, 3);
+      expect(third.key, isNot(restarted.items.first.key));
+    },
+  );
 
-  test('a later item can use the server id of an earlier one ({ref:name})', () async {
-    http.fallback = (_, _) => const FakeReply.offline();
-    await outbox.add(OutboxKind.patient, '/api/v1/patients', {'fullNameAr': 'x', 'sex': 'male'}, resultRef: 'pt1');
-    await outbox.add(
-      OutboxKind.observation,
-      '/api/v1/patients/${OutboxRef.placeholder('pt1')}/observations',
-      {'observedAt': 't', 'heartRate': 80, 'note': 'for {ref:pt1}'},
-    );
-    await settle();
-    expect(outbox.items, hasLength(2));
+  test(
+    'a later item can use the server id of an earlier one ({ref:name})',
+    () async {
+      http.fallback = (_, _) => const FakeReply.offline();
+      await outbox.add(OutboxKind.patient, '/api/v1/patients', {
+        'fullNameAr': 'x',
+        'sex': 'male',
+      }, resultRef: 'pt1');
+      await outbox.add(
+        OutboxKind.observation,
+        '/api/v1/patients/${OutboxRef.placeholder('pt1')}/observations',
+        {'observedAt': 't', 'heartRate': 80, 'note': 'for {ref:pt1}'},
+      );
+      await settle();
+      expect(outbox.items, hasLength(2));
 
-    http.fallback = null;
-    http.reply('POST /api/v1/patients', 200, {'id': 'srv-42', 'firstRecordStatus': 'basic'});
-    http.reply('POST /api/v1/patients/srv-42/observations', 200, {});
-    outbox.nudge();
-    await settle();
+      http.fallback = null;
+      http.reply('POST /api/v1/patients', 200, {
+        'id': 'srv-42',
+        'firstRecordStatus': 'basic',
+      });
+      http.reply('POST /api/v1/patients/srv-42/observations', 200, {});
+      outbox.nudge();
+      await settle();
 
-    expect(http.calls('POST /api/v1/patients/srv-42/observations'), hasLength(1));
-    expect(http.bodies.last, {'observedAt': 't', 'heartRate': 80, 'note': 'for srv-42'});
-    expect(outbox.refValue('pt1'), 'srv-42');
-    expect(outbox.items, isEmpty);
-  });
+      expect(
+        http.calls('POST /api/v1/patients/srv-42/observations'),
+        hasLength(1),
+      );
+      expect(http.bodies.last, {
+        'observedAt': 't',
+        'heartRate': 80,
+        'note': 'for srv-42',
+      });
+      expect(outbox.refValue('pt1'), 'srv-42');
+      expect(outbox.items, isEmpty);
+    },
+  );
 
   test('items that depend on a refused item are dropped too', () async {
     http.reply('POST /api/v1/patients', 400, errorBody('VALIDATION_ERROR'));
-    await outbox.add(OutboxKind.patient, '/api/v1/patients', {}, resultRef: 'pt1');
-    await outbox.add(OutboxKind.observation, '/api/v1/patients/{ref:pt1}/observations', {});
+    await outbox.add(
+      OutboxKind.patient,
+      '/api/v1/patients',
+      {},
+      resultRef: 'pt1',
+    );
+    await outbox.add(
+      OutboxKind.observation,
+      '/api/v1/patients/{ref:pt1}/observations',
+      {},
+    );
     await settle();
 
-    expect(failures.map((f) => f.error.code), ['VALIDATION_ERROR', 'DEPENDENCY_FAILED']);
+    expect(failures.map((f) => f.error.code), [
+      'VALIDATION_ERROR',
+      'DEPENDENCY_FAILED',
+    ]);
     expect(http.requests, hasLength(1));
   });
 
   test('saved refs survive a restart', () async {
     http.reply('POST /api/v1/patients', 200, {'id': 'srv-7'});
-    await outbox.add(OutboxKind.patient, '/api/v1/patients', {}, resultRef: 'pt9');
+    await outbox.add(
+      OutboxKind.patient,
+      '/api/v1/patients',
+      {},
+      resultRef: 'pt9',
+    );
     await settle();
 
     final restarted = build();
@@ -184,8 +265,15 @@ void main() {
   });
 
   group('GPS batching', () {
-    List<Map<String, dynamic>> points(int n, [int from = 0]) =>
-        List.generate(n, (i) => {'clientPointId': 'p${from + i}', 'recordedAt': 't', 'lon': 1.0, 'lat': 2.0});
+    List<Map<String, dynamic>> points(int n, [int from = 0]) => List.generate(
+      n,
+      (i) => {
+        'clientPointId': 'p${from + i}',
+        'recordedAt': 't',
+        'lon': 1.0,
+        'lat': 2.0,
+      },
+    );
 
     test('offline batches are merged up to 500 points', () async {
       http.fallback = (_, _) => const FakeReply.offline();
@@ -199,7 +287,11 @@ void main() {
     });
 
     test('a batch the server may have seen is never changed', () async {
-      http.reply(OutboxServiceTestRoutes.gps, 503, errorBody('DATABASE_UNAVAILABLE'));
+      http.reply(
+        OutboxServiceTestRoutes.gps,
+        503,
+        errorBody('DATABASE_UNAVAILABLE'),
+      );
       await outbox.addGps(points(10));
       await settle();
       final first = outbox.items.single;
@@ -215,13 +307,18 @@ void main() {
       await outbox.add(OutboxKind.status, '/s', {});
       await outbox.addGps(points(3));
       await settle();
-      expect(outbox.items.map((i) => i.kind), [OutboxKind.status, OutboxKind.gps]);
+      expect(outbox.items.map((i) => i.kind), [
+        OutboxKind.status,
+        OutboxKind.gps,
+      ]);
     });
   });
 
   test('clear wipes queued patient data and refs', () async {
     http.fallback = (_, _) => const FakeReply.offline();
-    await outbox.add(OutboxKind.patient, '/api/v1/patients', {'fullNameAr': 'secret'}, resultRef: 'x');
+    await outbox.add(OutboxKind.patient, '/api/v1/patients', {
+      'fullNameAr': 'secret',
+    }, resultRef: 'x');
     await settle();
     await outbox.clear();
     expect(outbox.items, isEmpty);
@@ -240,6 +337,115 @@ void main() {
       async.flushMicrotasks();
       expect(outbox.items, isEmpty);
       expect(http.calls('POST /a'), hasLength(2));
+    });
+  });
+
+  group('refused clinical writes (Not sent list)', () {
+    test(
+      'a 4xx on a clinical write is kept, reported, and stops "all sent"',
+      () async {
+        http.reply('POST /api/v1/patients/p1/treatments', 400, {
+          'code': 'MEDICINE_INVALID',
+          'message_ar': 'دواء غير صالح',
+          'message_en': 'Invalid medicine',
+        });
+        await outbox.add(
+          OutboxKind.treatment,
+          '/api/v1/patients/p1/treatments',
+          {'kind': 'medicine', 'name': 'Aspirin 300 mg'},
+        );
+        await settle();
+
+        expect(outbox.items, isEmpty);
+        expect(failures, hasLength(1));
+        expect(outbox.rejected, hasLength(1));
+        expect(outbox.rejected.single.error.code, 'MEDICINE_INVALID');
+        expect(outbox.sync.value.rejected, 1);
+        expect(outbox.sync.value.allSent, isFalse);
+        final label = SyncStatusChip.describe(
+          online: true,
+          state: outbox.sync.value,
+        ).$1;
+        expect(
+          label,
+          isNot('sync_online_all_sent'),
+          reason: 'the chip must not claim everything was sent',
+        );
+      },
+    );
+
+    test('a refused status is not kept: only clinical writes are', () async {
+      http.reply('POST /s', 409, {
+        'code': 'HANDOVER_REQUIRED',
+        'message_ar': 'x',
+        'message_en': 'x',
+      });
+      await outbox.add(OutboxKind.status, '/s', {'status': 'completed'});
+      await settle();
+      expect(outbox.rejected, isEmpty);
+      expect(failures, hasLength(1));
+    });
+
+    test(
+      'survives a restart, can be fixed and resent with a new key, or deleted',
+      () async {
+        http.reply('POST /api/v1/patients/p1/treatments', 400, {
+          'code': 'MEDICINE_INVALID',
+          'message_ar': 'x',
+          'message_en': 'x',
+        });
+        await outbox.add(
+          OutboxKind.treatment,
+          '/api/v1/patients/p1/treatments',
+          {'kind': 'medicine', 'name': 'bad'},
+        );
+        await settle();
+        final firstKey = http.requests.single.headers['Idempotency-Key'];
+
+        outbox = build();
+        await outbox.load();
+        expect(outbox.rejected, hasLength(1));
+
+        http.set('POST /api/v1/patients/p1/treatments', 200, {'id': 5});
+        await outbox.retryRejected(
+          outbox.rejected.single,
+          body: {'kind': 'medicine', 'name': 'ASPIRIN'},
+        );
+        await settle();
+        expect(outbox.rejected, isEmpty);
+        expect(http.requests.last.headers['Idempotency-Key'], isNot(firstKey));
+        expect(http.bodies.last, {'kind': 'medicine', 'name': 'ASPIRIN'});
+        expect(outbox.sync.value.allSent, isTrue);
+
+        http.set('POST /api/v1/patients/p1/observations', 400, {
+          'code': 'DATABASE_RULE',
+          'message_ar': 'x',
+          'message_en': 'x',
+        });
+        await outbox.add(
+          OutboxKind.observation,
+          '/api/v1/patients/p1/observations',
+          {'heartRate': 999},
+        );
+        await settle();
+        expect(outbox.rejected, hasLength(1));
+        await outbox.discardRejected(outbox.rejected.single);
+        expect(outbox.rejected, isEmpty);
+        outbox = build();
+        await outbox.load();
+        expect(
+          outbox.rejected,
+          isEmpty,
+          reason: 'a deleted entry stays deleted',
+        );
+      },
+    );
+
+    test('pendingClinical counts queued patient writes only', () async {
+      http.offline('POST /api/v1/patients');
+      await outbox.add(OutboxKind.patient, '/api/v1/patients', {});
+      await outbox.add(OutboxKind.status, '/s', {});
+      expect(outbox.pendingClinical, 1);
     });
   });
 }

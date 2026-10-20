@@ -5,7 +5,10 @@ import 'package:get/get.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../data/crew_repository.dart';
+import '../modules/handover/handover_view.dart';
+import '../modules/history/history_view.dart';
 import '../modules/home/crew_controller.dart';
+import '../modules/job/no_transport_view.dart';
 import '../modules/home/crew_home_view.dart';
 import '../modules/home/settings_view.dart';
 import '../modules/patient/patient_controller.dart';
@@ -79,6 +82,15 @@ void registerCrewServices({LocationSource? location, StompConnector? stomp}) {
     permanent: true,
   );
 
+  // Quick vitals starts from the job screen, before the patient route is ever opened.
+  Get.lazyPut(
+    () => PatientController(repo: repo, crew: crew),
+    fenix: true,
+  );
+
+  // "Not sent: N" in the sync chip opens the list of refused items.
+  LiveSyncChip.onNotSentTap = () => unawaited(Get.to<void>(() => const NotSentView()));
+
   // Start network work, live updates and GPS only once the PIN screen is passed.
   ever<bool>(lock.locked, (locked) {
     if (!locked && session.isSignedIn) unawaited(crew.activate());
@@ -131,6 +143,21 @@ List<GetPage<dynamic>> crewPages() => [
         fenix: true,
       ),
     ),
+  ),
+  GetPage<void>(
+    name: CrewRoutes.handover,
+    page: () => const HandoverView(),
+    middlewares: _guard,
+  ),
+  GetPage<void>(
+    name: CrewRoutes.noTransport,
+    page: () => const NoTransportView(),
+    middlewares: _guard,
+  ),
+  GetPage<void>(
+    name: CrewRoutes.history,
+    page: () => const HistoryView(),
+    middlewares: _guard,
   ),
   GetPage<void>(
     name: CrewRoutes.patientNew,

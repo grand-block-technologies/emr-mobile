@@ -422,6 +422,94 @@ void main() {
       expect((await r.repo.cachedJob()).hasJob, isFalse);
     });
 
+    test('a cancelled job counts the patient writes that will be refused', () async {
+      r.http.reply('POST /api/v1/crew/shifts', 200, {'id': 's-1'});
+      r.http.reply('GET /api/v1/crew/job', 200, jobWith('on_scene'));
+      await r.crew.startShift('qr');
+      await r.settle();
+
+      r.http.setOffline('POST /api/v1/patients');
+      await r.repo.registerPatient(
+        const PatientBody(temporary: true, temporaryLabel: 'U', fullNameAr: 'مجهول', sex: 'male'),
+        caseId: 'c-1',
+      );
+      r.http.reply('GET /api/v1/crew/job', 200, {'job': null});
+      r.stomp.event({'type': 'job.cancelled', 'dispatchId': 'd-1'});
+      await r.crew.refresh();
+      await pumpEventQueue(times: 100);
+
+      expect(r.crew.cancelledNotice.value, isTrue);
+      expect(r.crew.cancelledUnsent.value, 1);
+    });
+
+    test('a refused completion (HANDOVER_REQUIRED) goes back to the server step', () async {
+      r.http.reply('POST /api/v1/crew/shifts', 200, {'id': 's-1'});
+      r.http.reply('GET /api/v1/crew/job', 200, jobWith('at_hospital'));
+      r.http.reply('POST /api/v1/dispatches/d-1/status', 409, err('HANDOVER_REQUIRED'));
+      await r.crew.startShift('qr');
+      await r.settle();
+
+      await r.crew.advance(JobStatus.completed);
+      await r.outbox.flush();
+      await pumpEventQueue(times: 100);
+
+      expect(r.crew.job.value.jobStatus, JobStatus.atHospital, reason: 'server truth: still at the hospital');
+    });
+
+    test('the handover list on the job (any phone) counts for "Job completed"', () async {
+      r.http.reply('POST /api/v1/crew/shifts', 200, {'id': 's-1'});
+      r.http.reply('GET /api/v1/crew/job', 200, jobWith('at_hospital'));
+      await r.crew.startShift('qr');
+      await r.settle();
+      // No SessionService here, so this crew member cannot hand over: waits for the server list.
+      await r.crew.refreshHandover();
+      expect(r.crew.handoverMissing.value, isTrue);
+
+      r.http.set('GET /api/v1/crew/job', 200, {
+        ...jobWith('at_hospital'),
+        'handovers': [
+          {'id': 'h-1', 'patientId': 'pat-1', 'status': 'confirmed', 'handedAt': '2026-10-20T08:00:00Z', 'receivedAt': '2026-10-20T08:05:00Z'},
+        ],
+      });
+      await r.crew.refresh();
+      await r.crew.refreshHandover();
+      expect(r.crew.job.value.handovers.single.received, isTrue);
+      expect(r.crew.handoverMissing.value, isFalse);
+      expect((await r.repo.cachedJob()).handovers, hasLength(1), reason: 'kept in the offline cache');
+    });
+
+    test('ending at the scene without a reason sends nothing', () async {
+      r.http.reply('POST /api/v1/crew/shifts', 200, {'id': 's-1'});
+      r.http.reply('GET /api/v1/crew/job', 200, jobWith('on_scene'));
+      r.http.reply('POST /api/v1/dispatches/d-1/status', 200, {});
+      await r.crew.startShift('qr');
+      await r.settle();
+
+      await r.crew.advance(JobStatus.completed);
+      await r.outbox.flush();
+      expect(r.http.calls('POST /api/v1/dispatches/d-1/status'), isEmpty);
+    });
+
+    test('a shift with no driver tells the paramedic to wait', () async {
+      await r.cache.put('crew.shift', {
+        'id': 's',
+        'crew': [
+          {'role': 'paramedic', 'me': true},
+        ],
+      });
+      await r.crew.restore();
+      expect(r.crew.waitingForDriver, isTrue);
+      await r.cache.put('crew.shift', {
+        'id': 's',
+        'crew': [
+          {'role': 'paramedic', 'me': true},
+          {'role': 'driver'},
+        ],
+      });
+      await r.crew.restore();
+      expect(r.crew.waitingForDriver, isFalse);
+    });
+
     test('completing does not look like a cancellation', () async {
       r.http.reply('POST /api/v1/crew/shifts', 200, {'id': 's-1'});
       r.http.reply('GET /api/v1/crew/job', 200, jobWith('at_hospital'));

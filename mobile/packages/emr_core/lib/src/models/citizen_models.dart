@@ -1,5 +1,7 @@
 import 'package:json_annotation/json_annotation.dart';
 
+import 'page.dart';
+
 part 'citizen_models.g.dart';
 
 @JsonSerializable(createFactory: false)
@@ -146,7 +148,18 @@ class RequestRow {
 
 @JsonSerializable(createToJson: false)
 class RequestStatus {
-  const RequestStatus({this.statusCode, this.statusAr, this.statusEn, this.hospitalNameAr, this.hospitalNameEn, this.updatedAt});
+  const RequestStatus({
+    this.statusCode,
+    this.statusAr,
+    this.statusEn,
+    this.hospitalNameAr,
+    this.hospitalNameEn,
+    this.updatedAt,
+    this.reachedSteps = const [],
+    this.closingReason,
+    this.closingReasonAr,
+    this.closingReasonEn,
+  });
 
   factory RequestStatus.fromJson(Map<String, dynamic> json) => _$RequestStatusFromJson(json);
 
@@ -157,10 +170,34 @@ class RequestStatus {
   final String? hospitalNameEn;
   final DateTime? updatedAt;
 
+  /// The statuses the request really reached, in order.
+  @JsonKey(defaultValue: <ReachedStep>[])
+  final List<ReachedStep> reachedSteps;
+
+  /// Why the case was closed; null while open or when no case was made.
+  final String? closingReason;
+  final String? closingReasonAr;
+  final String? closingReasonEn;
+
+  String? closing(String lang) =>
+      (lang == 'en' ? closingReasonEn : closingReasonAr) ?? closingReasonAr ?? closingReasonEn;
+
   RequestStatusCode get code => RequestStatusCode.fromWire(statusCode);
   bool get isClosed => code == RequestStatusCode.closed;
   String status(String lang) => (lang == 'en' ? statusEn : statusAr) ?? statusAr ?? statusEn ?? statusCode ?? '';
   String? hospital(String lang) => (lang == 'en' ? hospitalNameEn : hospitalNameAr) ?? hospitalNameAr ?? hospitalNameEn;
+}
+
+@JsonSerializable(createToJson: false)
+class ReachedStep {
+  const ReachedStep({this.code, this.at});
+
+  factory ReachedStep.fromJson(Map<String, dynamic> json) => _$ReachedStepFromJson(json);
+
+  final String? code;
+  final DateTime? at;
+
+  RequestStatusCode get status => RequestStatusCode.fromWire(code);
 }
 
 enum DependantRelation {
@@ -189,6 +226,43 @@ class DependantLink {
 
   final String? id;
   final String? status;
+}
+
+/// `GET /citizen/history`: `{patientId, visits, diagnoses, checkResults, conditions}`, each a page
+/// with `content`. An older answer that is one page itself is read as the visits.
+class CitizenHistory {
+  const CitizenHistory({
+    this.patientId,
+    this.visits = const ApiPage(content: []),
+    this.diagnoses = const ApiPage(content: []),
+    this.checkResults = const ApiPage(content: []),
+    this.conditions = const ApiPage(content: []),
+  });
+
+  factory CitizenHistory.fromJson(Map<String, dynamic> json) {
+    ApiPage<HistoryRow> page(Object? v) =>
+        v is Map ? ApiPage<HistoryRow>.fromJson(Map<String, dynamic>.from(v), HistoryRow.fromJson) : const ApiPage(content: []);
+    if (json['content'] is List && json['visits'] == null) {
+      return CitizenHistory(patientId: json['patientId'] as String?, visits: page(json));
+    }
+    return CitizenHistory(
+      patientId: json['patientId'] as String?,
+      visits: page(json['visits']),
+      diagnoses: page(json['diagnoses']),
+      checkResults: page(json['checkResults']),
+      conditions: page(json['conditions']),
+    );
+  }
+
+  final String? patientId;
+  final ApiPage<HistoryRow> visits;
+  final ApiPage<HistoryRow> diagnoses;
+  final ApiPage<HistoryRow> checkResults;
+  final ApiPage<HistoryRow> conditions;
+
+  bool get isEmpty =>
+      visits.content.isEmpty && diagnoses.content.isEmpty && checkResults.content.isEmpty && conditions.content.isEmpty;
+  bool get hasNext => visits.hasNext || diagnoses.hasNext || checkResults.hasNext || conditions.hasNext;
 }
 
 /// History rows have no published schema yet, so keep the raw map and read known keys defensively.

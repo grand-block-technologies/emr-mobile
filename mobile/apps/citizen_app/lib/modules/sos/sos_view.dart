@@ -208,10 +208,13 @@ class _SosButtonState extends State<_SosButton> with SingleTickerProviderStateMi
                     const SizedBox(height: Space.md),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: Space.lg),
-                      child: Text(
-                        widget.label,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700, height: 1.25),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          widget.label,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700, height: 1.25),
+                        ),
                       ),
                     ),
                   ],

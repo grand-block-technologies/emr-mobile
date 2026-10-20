@@ -1,5 +1,8 @@
 /// What a queued write is, for the sync banner and for reacting to results.
-enum OutboxKind { confirm, status, alert, gps, patient, observation, treatment, other }
+enum OutboxKind { confirm, status, alert, gps, patient, observation, treatment, handover, other }
+
+/// Clinical writes. A refusal of one of these is kept for the paramedic, never silently dropped.
+const clinicalOutboxKinds = {OutboxKind.patient, OutboxKind.observation, OutboxKind.treatment, OutboxKind.handover};
 
 /// One queued write, saved to disk as path + JSON body (not as a Retrofit call),
 /// sent later through the shared Dio so it gets the same token and refresh handling.

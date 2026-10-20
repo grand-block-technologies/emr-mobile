@@ -87,7 +87,20 @@ RequestStatus _$RequestStatusFromJson(Map<String, dynamic> json) =>
       updatedAt: json['updatedAt'] == null
           ? null
           : DateTime.parse(json['updatedAt'] as String),
+      reachedSteps:
+          (json['reachedSteps'] as List<dynamic>?)
+              ?.map((e) => ReachedStep.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      closingReason: json['closingReason'] as String?,
+      closingReasonAr: json['closingReasonAr'] as String?,
+      closingReasonEn: json['closingReasonEn'] as String?,
     );
+
+ReachedStep _$ReachedStepFromJson(Map<String, dynamic> json) => ReachedStep(
+  code: json['code'] as String?,
+  at: json['at'] == null ? null : DateTime.parse(json['at'] as String),
+);
 
 Map<String, dynamic> _$DependantBodyToJson(DependantBody instance) =>
     <String, dynamic>{
